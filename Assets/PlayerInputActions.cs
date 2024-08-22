@@ -100,15 +100,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""ScrollMouse"",
-                    ""type"": ""Button"",
-                    ""id"": ""96adf68f-b07d-4016-8f0a-a730ad7a5658"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
                     ""name"": ""Yes"",
                     ""type"": ""Button"",
                     ""id"": ""e51fe386-ec10-41f5-83d1-dadfcbda19c3"",
@@ -128,19 +119,19 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": ""Move"",
-                    ""type"": ""Button"",
+                    ""type"": ""Value"",
                     ""id"": ""8c82ee7d-54a2-4940-8bf5-c60644aa10ee"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": ""Vector2"",
                     ""processors"": """",
                     ""interactions"": """",
-                    ""initialStateCheck"": false
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
                 {
                     ""name"": """",
                     ""id"": ""bfb2b1c9-4ca5-43a3-9574-721f5f710702"",
-                    ""path"": ""<Mouse>/leftButton"",
+                    ""path"": ""<Keyboard>/a"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -151,7 +142,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""83c822fc-8512-4903-9f7b-883b061c954d"",
-                    ""path"": ""<Mouse>/rightButton"",
+                    ""path"": ""<Keyboard>/d"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -162,7 +153,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""87cba523-da8c-4e15-b1f3-4fcb795c5dec"",
-                    ""path"": ""<Keyboard>/q"",
+                    ""path"": ""<Keyboard>/w"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -173,7 +164,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""d245b609-1957-411c-9f6c-1a5dc2f68065"",
-                    ""path"": ""<Keyboard>/e"",
+                    ""path"": ""<Keyboard>/s"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -217,22 +208,11 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""3de38e2a-6cfb-4dbe-ae49-400e84183b63"",
-                    ""path"": ""<Keyboard>/backquote"",
+                    ""path"": ""<Keyboard>/p"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Cheat"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""502a98e2-cd14-4d29-a51d-a7883c310370"",
-                    ""path"": """",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ScrollMouse"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -259,26 +239,59 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": """",
-                    ""id"": ""e980831d-cbea-4fdc-a533-72e1c288d332"",
-                    ""path"": ""<Keyboard>/a"",
+                    ""name"": ""2D Vector"",
+                    ""id"": ""b8ce710b-18f1-401e-978e-08a6c9162d1d"",
+                    ""path"": ""2DVector"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Move"",
-                    ""isComposite"": false,
+                    ""isComposite"": true,
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": """",
-                    ""id"": ""790fbcc8-b1b7-4712-958b-f14e2d840496"",
-                    ""path"": ""<Keyboard>/d"",
+                    ""name"": ""up"",
+                    ""id"": ""2a027811-3678-4c37-a1c3-dd0421309f11"",
+                    ""path"": ""<Keyboard>/upArrow"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Move"",
                     ""isComposite"": false,
-                    ""isPartOfComposite"": false
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""b9cd604b-7d7c-4dad-996a-c729d0c9ec8d"",
+                    ""path"": ""<Keyboard>/downArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""cfb45827-c2b9-4ae1-b207-acf281b9c11b"",
+                    ""path"": ""<Keyboard>/leftArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""12f4b33f-51f9-4bf4-a0b1-177ba8455b38"",
+                    ""path"": ""<Keyboard>/rightArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         }
@@ -295,7 +308,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         m_GamePlay_Jump = m_GamePlay.FindAction("Jump", throwIfNotFound: true);
         m_GamePlay_PauseGame = m_GamePlay.FindAction("PauseGame", throwIfNotFound: true);
         m_GamePlay_Cheat = m_GamePlay.FindAction("Cheat", throwIfNotFound: true);
-        m_GamePlay_ScrollMouse = m_GamePlay.FindAction("ScrollMouse", throwIfNotFound: true);
         m_GamePlay_Yes = m_GamePlay.FindAction("Yes", throwIfNotFound: true);
         m_GamePlay_No = m_GamePlay.FindAction("No", throwIfNotFound: true);
         m_GamePlay_Move = m_GamePlay.FindAction("Move", throwIfNotFound: true);
@@ -368,7 +380,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_GamePlay_Jump;
     private readonly InputAction m_GamePlay_PauseGame;
     private readonly InputAction m_GamePlay_Cheat;
-    private readonly InputAction m_GamePlay_ScrollMouse;
     private readonly InputAction m_GamePlay_Yes;
     private readonly InputAction m_GamePlay_No;
     private readonly InputAction m_GamePlay_Move;
@@ -384,7 +395,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         public InputAction @Jump => m_Wrapper.m_GamePlay_Jump;
         public InputAction @PauseGame => m_Wrapper.m_GamePlay_PauseGame;
         public InputAction @Cheat => m_Wrapper.m_GamePlay_Cheat;
-        public InputAction @ScrollMouse => m_Wrapper.m_GamePlay_ScrollMouse;
         public InputAction @Yes => m_Wrapper.m_GamePlay_Yes;
         public InputAction @No => m_Wrapper.m_GamePlay_No;
         public InputAction @Move => m_Wrapper.m_GamePlay_Move;
@@ -421,9 +431,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Cheat.started += instance.OnCheat;
             @Cheat.performed += instance.OnCheat;
             @Cheat.canceled += instance.OnCheat;
-            @ScrollMouse.started += instance.OnScrollMouse;
-            @ScrollMouse.performed += instance.OnScrollMouse;
-            @ScrollMouse.canceled += instance.OnScrollMouse;
             @Yes.started += instance.OnYes;
             @Yes.performed += instance.OnYes;
             @Yes.canceled += instance.OnYes;
@@ -461,9 +468,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Cheat.started -= instance.OnCheat;
             @Cheat.performed -= instance.OnCheat;
             @Cheat.canceled -= instance.OnCheat;
-            @ScrollMouse.started -= instance.OnScrollMouse;
-            @ScrollMouse.performed -= instance.OnScrollMouse;
-            @ScrollMouse.canceled -= instance.OnScrollMouse;
             @Yes.started -= instance.OnYes;
             @Yes.performed -= instance.OnYes;
             @Yes.canceled -= instance.OnYes;
@@ -500,7 +504,6 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         void OnJump(InputAction.CallbackContext context);
         void OnPauseGame(InputAction.CallbackContext context);
         void OnCheat(InputAction.CallbackContext context);
-        void OnScrollMouse(InputAction.CallbackContext context);
         void OnYes(InputAction.CallbackContext context);
         void OnNo(InputAction.CallbackContext context);
         void OnMove(InputAction.CallbackContext context);

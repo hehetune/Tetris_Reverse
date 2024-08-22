@@ -40,7 +40,6 @@ namespace Managers
             playerInputActions.GamePlay.DropBlockFast.canceled += DropBlockFast_canceled;
             playerInputActions.GamePlay.Jump.performed += Jump_performed;
             playerInputActions.GamePlay.Cheat.performed += Cheat_performed;
-            playerInputActions.GamePlay.ScrollMouse.performed += ScrollMouseOnperformed;
             playerInputActions.GamePlay.Yes.performed += YesPerformed;
             playerInputActions.GamePlay.No.performed += NoPerformed;
         }
@@ -56,7 +55,6 @@ namespace Managers
             playerInputActions.GamePlay.DropBlockFast.canceled -= DropBlockFast_canceled;
             playerInputActions.GamePlay.Jump.performed -= Jump_performed;
             playerInputActions.GamePlay.Cheat.performed -= Cheat_performed;
-            playerInputActions.GamePlay.ScrollMouse.performed -= ScrollMouseOnperformed;
             playerInputActions.GamePlay.Yes.performed -= YesPerformed;
             playerInputActions.GamePlay.No.performed -= NoPerformed;
             playerInputActions.Dispose();
@@ -110,20 +108,6 @@ namespace Managers
         private void Cheat_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
         {
             OnCheatAction?.Invoke(this, EventArgs.Empty);
-        }
-
-        private void ScrollMouseOnperformed(InputAction.CallbackContext _obj)
-        {
-            var scrollDirection = _obj.ReadValue<Vector2>();
-            switch (scrollDirection.y)
-            {
-                case > 0:
-                    OnRotateBlockLeftAction?.Invoke(this, EventArgs.Empty);
-                    break;
-                case < 0:
-                    OnRotateBlockRightAction?.Invoke(this, EventArgs.Empty);
-                    break;
-            }
         }
 
         private void YesPerformed(InputAction.CallbackContext obj)

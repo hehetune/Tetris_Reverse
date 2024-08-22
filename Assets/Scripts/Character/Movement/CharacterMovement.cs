@@ -1,208 +1,241 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using Managers;
 using UnityEngine;
 
 namespace Character.Movement
 {
     public class CharacterMovement : MonoBehaviour
     {
-        [SerializeField] private Rigidbody2D rb;
+        [Header("Cache Components")] [SerializeField]
+        private SpriteRenderer _sprite;
 
-        [Range(0, 1)] [SerializeField] private float m_SlideSpeed = .5f; // How much to smooth out the movement
-
-        [Range(0, .3f)] [SerializeField]
-        private float m_MovementSmoothing = .05f; // How much to smooth out the movement
-
-        [SerializeField] int totalJumps = 1; // Total jump player can perform
-        [SerializeField] private bool m_AirControl = false; // Whether or not a player can steer while jumping;
-
-        private float dirX = 0f; // X direction value
-        private bool facingRight = true; // is player facing right
-        private bool jumpPressed = false;
-
-        private int availableJumps;
-        private bool isDoubleJump;
-        private bool coyoteJump;
+        [Header("Movement Settings")] [SerializeField]
+        private Rigidbody2D _rb;
 
         [SerializeField] private float moveSpeed = 6f;
         [SerializeField] private float jumpHeight = 700f;
         [SerializeField] private float gravityScale = 3f;
+        [Range(0, 1)] [SerializeField] private float _slideSpeed = 0.5f;
+        [Range(0, 0.3f)] [SerializeField] private float _movementSmoothing = 0.05f;
 
-        // ground & wall attributes
-        private bool grounded = true;
-        private bool isSliding = false;
-        const float k_WallRadius = .2f; // Radius of the overlap circle to determine if the player can stand up
-        const float k_GroundedRadius = .27f; // Radius of the overlap circle to determine if grounded
-        [SerializeField] private Transform m_WallCheck; // A position marking where to check for ceilings
-        [SerializeField] public Transform groundCheck;
-        [SerializeField] private LayerMask m_WhatIsWall; // A mask determining what is ground to the character
-        [SerializeField] private LayerMask m_WhatIsGround;
+        [Header("Jump Settings")] [SerializeField]
+        private int totalJumps = 1;
 
-        private Vector3 m_Velocity = Vector3.zero;
+        [SerializeField] private bool _airControl = false;
 
+        [Header("Ground & Wall Check")] [SerializeField]
+        private Transform _wallCheckPosition;
+
+        [SerializeField] private Transform _groundCheckPosition;
+        [SerializeField] private Transform _groundEffectPosition;
+        [SerializeField] private LayerMask _whatIsWall;
+        [SerializeField] private LayerMask _whatIsGround;
+        [SerializeField] private bool canSlide = true;
+
+        private int _availableJumps;
+        private bool _isDoubleJump;
+        private bool _coyoteJump;
+        private bool _grounded;
+        private bool _isSliding;
+        private bool _wasGrounded;
+
+        private Vector3 _velocity = Vector3.zero;
         private bool _canMove;
+        private bool _wasSliding;
+
+        private Vector2 MoveInput => GameInput.Instance.CharacterMovement;
+
+        private Coroutine _groundEffectCoroutine;
+        private Coroutine _wallEffectCoroutine;
+
+        private const float k_WallRadius = 0.2f;
+        private const float k_GroundedRadius = 0.27f;
+
+        public bool Grounded => _grounded;
+        public bool IsSliding => _isSliding;
 
         private void Awake()
         {
-            availableJumps = totalJumps;
+            _availableJumps = totalJumps;
         }
 
-        // Start is called before the first frame update
         private void Start()
         {
-            this.rb = GetComponent<Rigidbody2D>();
+            _rb = GetComponent<Rigidbody2D>();
         }
 
-        public void ApplyGravity()
+        private void OnEnable()
         {
-            rb.bodyType = RigidbodyType2D.Dynamic;
-            rb.gravityScale = gravityScale;
+            GameInput.Instance.OnJumpAction += OnJumpEvent;
         }
 
-        // Update is called once per frame
+        private void OnDisable()
+        {
+            GameInput.Instance.OnJumpAction -= OnJumpEvent;
+        }
+
         private void Update()
         {
-            if (!_canMove) return;
-            HandlePCInput();
+            HandleMoveHorizontal();
+            UpdateGroundedStatus();
+            ApplyGravityScale();
+            HandleEffects();
         }
 
-        protected void HandlePCInput()
-        {
-            dirX = Input.GetAxisRaw("Horizontal");
+        // private void FixedUpdate()
+        // {
+        // }
 
-            if (Input.GetButtonDown("Jump") && totalJumps > 0)
+        private void HandleMoveHorizontal()
+        {
+            if (!_grounded && !_airControl) return;
+
+            Vector2 targetVelocity = new Vector2(MoveInput.x * moveSpeed, _rb.velocity.y);
+
+            _wasSliding = _isSliding;
+            _isSliding = false;
+
+            if (canSlide && ShouldSlide())
             {
-                jumpPressed = true;
+                targetVelocity.y = -_slideSpeed;
+                _isSliding = true;
+                ResetJumpStatus();
             }
+
+            _rb.velocity = Vector3.SmoothDamp(_rb.velocity, targetVelocity, ref _velocity, _movementSmoothing);
+
+            
         }
 
-        private void Move()
+        private bool ShouldSlide()
         {
-            if (jumpPressed)
-            {
-                Jump();
-            }
-
-            Vector2 targetVelocity = new Vector2(dirX * moveSpeed, rb.velocity.y);
-
-            bool wasSliding = isSliding;
-            isSliding = false;
-            // Check if character is sliding on the wall
-            if (Physics2D.OverlapCircle(m_WallCheck.position, k_WallRadius, m_WhatIsWall) && Mathf.Abs(dirX) > 0 &&
-                !grounded && rb.velocity.y < 0)
-            {
-                targetVelocity.y = -m_SlideSpeed;
-                isSliding = true;
-                // if (!wasSliding) wallDustCoroutineAllow = true;
-                availableJumps = totalJumps;
-                isDoubleJump = false;
-            }
-            // else if (wasSliding) wallDustCoroutineAllow = false;
-
-            rb.velocity = Vector3.SmoothDamp(rb.velocity, targetVelocity, ref m_Velocity, m_MovementSmoothing);
+            return Physics2D.OverlapCircle(_wallCheckPosition.position, k_WallRadius, _whatIsWall) &&
+                   Mathf.Abs(MoveInput.x) > 0 && !_grounded && _rb.velocity.y < 0;
         }
 
-        void Jump()
+        private void ResetJumpStatus()
         {
-            if (grounded || isSliding)
-            {
-                availableJumps = totalJumps;
-                DoJump();
-                grounded = false;
+            _availableJumps = totalJumps;
+            _isDoubleJump = false;
+        }
 
+        private void OnJumpEvent(object sender, EventArgs e)
+        {
+            if (totalJumps < 0) return;
+
+            if (_grounded || _isSliding)
+            {
+                _availableJumps = totalJumps;
+                HandleJump();
+                _grounded = false;
                 StartCoroutine(CoyoteJumpDelay());
             }
-            else if (availableJumps > 0)
+            else if (_availableJumps > 0)
             {
-                if (coyoteJump)
-                {
-                    isDoubleJump = true;
-                    coyoteJump = false;
-                    DoJump(1.2f);
-                }
-                else
-                {
-                    DoJump();
-                }
+                HandleAirJump();
             }
-
-            jumpPressed = false;
         }
 
-        void DoJump(float alpha = 1f)
+        private void HandleJump(float alpha = 1f)
         {
-            --availableJumps;
-            rb.velocity = new Vector2(rb.velocity.x, 0f);
-            rb.AddForce(Vector2.up * jumpHeight * alpha);
-            // AudioManager.Ins.PlaySFX(EffectSound.JumpSound);
+            _availableJumps--;
+            _rb.velocity = new Vector2(_rb.velocity.x, 0f);
+            _rb.AddForce(Vector2.up * jumpHeight * alpha);
         }
 
-        IEnumerator CoyoteJumpDelay()
+        private void HandleAirJump()
         {
-            coyoteJump = true;
-            yield return new WaitForSeconds(0.4f);
-            coyoteJump = false;
-        }
-
-        private void FixedUpdate()
-        {
-            UpdateAnimationState();
-
-            if (!_canMove) return;
-
-            bool wasGrounded = grounded;
-            grounded = false;
-            Collider2D[] colliders = Physics2D.OverlapCircleAll(groundCheck.position, k_GroundedRadius, m_WhatIsGround);
-            if (colliders.Length > 0)
+            if (_coyoteJump)
             {
-                grounded = true;
-                if (!wasGrounded)
-                {
-                    // FXSpawner.Instance.Spawn(FXSpawner.GroundDust, groundCheck.position + groundDustOffset,
-                    //     Quaternion.Euler(0, 0, 0));
-                    // groundDustCoroutineAllow = true;
-                }
-            }
-            else if (wasGrounded)
-            {
-                // groundDustCoroutineAllow = false;
-            }
-
-            // HandleGroundEffect();
-            // HandleWallEffect();
-
-            if (rb.velocity.y < 0 && !isSliding)
-            {
-                rb.gravityScale = gravityScale * 1.2f;
+                _isDoubleJump = true;
+                _coyoteJump = false;
+                HandleJump(1.2f);
             }
             else
             {
-                rb.gravityScale = gravityScale;
+                HandleJump();
             }
+        }
 
-            if (grounded || m_AirControl)
+        private IEnumerator CoyoteJumpDelay()
+        {
+            _coyoteJump = true;
+            yield return new WaitForSeconds(0.4f);
+            _coyoteJump = false;
+        }
+
+        private void ApplyGravityScale()
+        {
+            _rb.gravityScale = (_rb.velocity.y < 0 && !_isSliding) ? gravityScale * 1.2f : gravityScale;
+        }
+
+        private void UpdateGroundedStatus()
+        {
+            _wasGrounded = _grounded;
+            _grounded = false;
+
+            Collider2D[] colliders =
+                Physics2D.OverlapCircleAll(_groundCheckPosition.position, k_GroundedRadius, _whatIsGround);
+            if (colliders.Length > 0)
             {
-                Move();
+                _grounded = true;
             }
         }
 
-        
-
-        private void UpdateAnimationState()
+        private void HandleEffects()
         {
+            HandleGroundEffect();
+            HandleWallEffect();
         }
 
-        private void Flip()
+        private void HandleGroundEffect()
         {
-            facingRight = !facingRight;
-            transform.parent.Rotate(0f, 180f, 0f);
+            if (_grounded && MoveInput.x != 0 && _groundEffectCoroutine == null)
+            {
+                _groundEffectCoroutine = StartCoroutine(SpawnGroundEffect());
+            }
         }
 
-        public void OnDoubleJumpEnd()
+        private void HandleWallEffect()
         {
-            if (isDoubleJump) isDoubleJump = false;
+            if (_isSliding && _wallEffectCoroutine == null)
+            {
+                _wallEffectCoroutine = StartCoroutine(SpawnWallEffect());
+            }
         }
 
-        
+        [SerializeField] private float _groundParticleEmissionRate = 0.1f;
+        [SerializeField] private float _wallParticleEmissionRate = 0.25f;
+        [SerializeField] private Prefab _groundParticlePrefab;
+        [SerializeField] private Prefab _wallParticlePrefab;
+
+        private IEnumerator SpawnGroundEffect()
+        {
+            while (_grounded && MoveInput.x != 0)
+            {
+                PoolManager.Get<PoolObject>(_groundParticlePrefab, out var effectGo);
+                effectGo.transform.position = _groundEffectPosition.position;
+                effectGo.transform.rotation = Quaternion.identity;
+                effectGo.GetComponent<PoolObject>().ReturnToPoolByLifeTime(1f);
+                yield return new WaitForSeconds(_groundParticleEmissionRate);
+            }
+
+            _groundEffectCoroutine = null;
+        }
+
+        private IEnumerator SpawnWallEffect()
+        {
+            while (_isSliding)
+            {
+                PoolManager.Get<PoolObject>(_wallParticlePrefab, out var effectGo);
+                effectGo.transform.position = _wallCheckPosition.position;
+                effectGo.transform.rotation = Quaternion.identity;
+                effectGo.GetComponent<PoolObject>().ReturnToPoolByLifeTime(1f);
+                yield return new WaitForSeconds(_wallParticleEmissionRate);
+            }
+
+            _wallEffectCoroutine = null;
+        }
     }
 }
