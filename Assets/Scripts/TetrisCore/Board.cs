@@ -11,47 +11,59 @@ namespace TetrisCore
         public NextPiece nextPiece;
         public TetrominoData[] tetrominoes;
 
-        public Vector3Int spawnPosition = new Vector3Int(0, 7, 0);
+        private int highestYOfBLocks = 0;
+        [SerializeField] private Transform spawnOffsetPointTransform;
+        private Vector3Int GetSpawnOffset() => Vector3Int.RoundToInt(spawnOffsetPointTransform.position);
+        private Vector3Int GetSpawnPoint => GetSpawnOffset() + Vector3Int.up * highestYOfBLocks;
+
         public int boardWidth = 12;
-        private int currentSpawnHeight = 0;
-        private int _xMin = 0;
-        private int _xMax = 0;
-        private int _yMin = 0;
-        private int _yMax = 0;
+        [SerializeField] private int _xMin = 0;
+        [SerializeField] private int _xMax = 0;
+        [SerializeField] private int _yMin = 0;
         public int XMin => _xMin;
         public int XMax => _xMax;
         public int YMin => _yMin;
-        public int YMax => _yMax;
+        [SerializeField] private int _startRowsNum = 20;
 
         private int currentPieceIndex = 0;
         private int nextPieceIndex = 0;
+        [SerializeField] private List<BlockRow> _blockRows = new List<BlockRow>();
 
-        [SerializeField] private Prefab _blockPrefab;
-
-        private bool IsWithinBoard(int x) => x >= _xMin && x <= _xMax;
-
-        private List<Block[]> _blockRows = new List<Block[]>();
+        private bool IsWithinBoard(Vector3Int pos)
+        {
+            return pos.x >= _xMin && pos.x <= _xMax && pos.y >= _yMin;
+        }
 
         private void Awake()
         {
-            _xMin = -boardWidth / 2;
-            _xMax = boardWidth / 2;
-            _yMax = currentSpawnHeight;
+            _xMin = 0;
+            _xMax = boardWidth;
+            _yMin = 0;
             for (int i = 0; i < this.tetrominoes.Length; i++)
             {
                 this.tetrominoes[i].Initialize();
             }
+
+            for (int i = _yMin; i <= _startRowsNum; i++)
+            {
+                BlockRow row = new()
+                {
+                    cols = new Block[boardWidth]
+                };
+                // Block[] row = new Block[boardWidth];
+                _blockRows.Add(row);
+            }
         }
-        
+
         public bool IsValidPosition(Piece piece, Vector3Int position)
         {
             for (int i = 0; i < piece.cells.Length; i++)
             {
                 Vector3Int tilePosition = piece.cells[i] + position;
+                    // Debug.Log("Board::IsValidPosition --- tilePosition: " + tilePosition);
+                if (!IsWithinBoard(tilePosition)) return false;
 
-                if (!IsWithinBoard(tilePosition.x)) return false;
-
-                if (HasSprite(position)) return false;
+                if (HasBlock(tilePosition)) return false;
             }
 
             return true;
@@ -70,41 +82,45 @@ namespace TetrisCore
             nextPiece.ChangePiece(tetrominoes[nextPieceIndex].cells, tetrominoes[nextPieceIndex].sprite);
         }
 
+        public void AddBlockToMatrix(Piece piece)
+        {
+            for (int i = 0; i < piece.blocks.Length; i++)
+            {
+                piece.blocks[i].transform.parent = this.transform;
+                int y = piece.cells[i].y + piece.Position.y, x = piece.cells[i].x + piece.Position.x;
+                Debug.LogError("y: " + y);
+                Debug.LogError("x: " + x);
+                _blockRows[y].cols[x] = piece.blocks[i];
+                piece.blocks[i] = null;
+
+                highestYOfBLocks = Mathf.Max(highestYOfBLocks, piece.Position.y + piece.cells[i].y);
+            }
+        }
+
         public void SpawnPiece()
         {
             GetNextRandomPieceIndex();
             TetrominoData data = this.tetrominoes[currentPieceIndex];
 
-            this._activePiece.Initialize(this, spawnPosition, data);
-
-            Set(this._activePiece);
-        }
-
-        public void Set(Piece piece)
-        {
-            for (int i = 0; i < piece.cells.Length; i++)
-            {
-                Vector3Int cellPosition = piece.cells[i] + piece.position;
-                CreateSprite(piece.data.sprite, cellPosition);
-            }
+            this._activePiece.Initialize(this, GetSpawnPoint, data);
         }
 
         public void Clear(Piece piece)
         {
             for (int i = 0; i < piece.cells.Length; i++)
             {
-                Vector3Int cellPosition = piece.cells[i] + piece.position;
-                DestroySprite(cellPosition);
+                Vector3Int cellPosition = piece.cells[i] + piece.Position;
+                DestroyBlock(cellPosition);
             }
         }
 
-        public void ClearLines()
+        public void ClearLines(int startRow, int endRow)
         {
-            int row = _yMin;
+            int row = startRow;
 
             int linesClear = 0;
 
-            while (row < _yMax)
+            while (row < endRow)
             {
                 if (IsLineFull(row))
                 {
@@ -116,7 +132,6 @@ namespace TetrisCore
                     row++;
                 }
             }
-
             // if (linesClear > 0) TetrisGameManager.Instance.IncreaseScore(linesClear);
         }
 
@@ -126,7 +141,7 @@ namespace TetrisCore
             {
                 Vector3Int position = new Vector3Int(col, row, 0);
 
-                if (!HasSprite(position))
+                if (!HasBlock(position))
                 {
                     return false;
                 }
@@ -140,10 +155,10 @@ namespace TetrisCore
             for (int col = _xMin; col < _xMax; col++)
             {
                 Vector3Int position = new Vector3Int(col, row, 0);
-                DestroySprite(position);
+                DestroyBlock(position);
             }
 
-            while (row < _yMax)
+            while (row < highestYOfBLocks)
             {
                 for (int col = _xMin; col < _xMax; col++)
                 {
@@ -157,34 +172,20 @@ namespace TetrisCore
             }
         }
 
-        private void CreateSprite(Sprite sprite, Vector3Int position)
+        private void DestroyBlock(Vector3Int position)
         {
-            PoolManager.Get<PoolObject>(_blockPrefab, out var blockGO);
-            blockGO.GetComponent<SpriteRenderer>().sprite = sprite;
-            blockGO.transform.position = position;
-            blockGO.transform.rotation = Quaternion.identity;
-            // blockGO.name = $"Block_{position.x}_{position.y}";
-        }
-
-        private void DestroySprite(Vector3Int position)
-        {
-            Block block = _blockRows[position.y][position.x];
+            Block block = _blockRows[position.y].cols[position.x];
             if (block) block.GetComponent<PoolObject>().ReturnToPool();
-            // Transform child = transform.Find($"Block_{position.x}_{position.y}");
-            // if (child != null)
-            // {
-            //     Destroy(child.gameObject);
-            // }
         }
 
-        private bool HasSprite(Vector3Int position)
+        private bool HasBlock(Vector3Int position)
         {
-            return _blockRows[position.y][position.x] != null;
+            return _blockRows[position.y].cols[position.x] != null;
         }
 
         private void MoveSprite(Vector3Int fromPosition, Vector3Int toPosition)
         {
-            Block child = _blockRows[fromPosition.y][fromPosition.x];
+            Block child = _blockRows[fromPosition.y].cols[fromPosition.x];
             if (child != null)
             {
                 child.transform.position = toPosition;

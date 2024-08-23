@@ -6,7 +6,23 @@ namespace Managers
 {
     public class GameInput : MonoBehaviour
     {
-        public static GameInput Instance { get; private set; }
+        private static GameInput instance;
+        public static GameInput Instance 
+        {
+            get 
+            {
+                if (instance == null)
+                {
+                    instance = FindObjectOfType<GameInput>();
+                    if (instance == null)
+                    {
+                        GameObject obj = new GameObject("GameInput");
+                        instance = obj.AddComponent<GameInput>();
+                    }
+                }
+                return instance;
+            }
+        }
 
         public event EventHandler OnInteractAction;
         public event EventHandler OnPauseAction;
@@ -28,7 +44,12 @@ namespace Managers
 
         private void Awake()
         {
-            Instance = this;
+            if(instance!=null)
+            {
+                Destroy(this.gameObject);
+                return;
+            }
+            instance = this;
             playerInputActions = new PlayerInputActions();
             playerInputActions.GamePlay.Enable();
             playerInputActions.GamePlay.PauseGame.performed += Pause_performed;
@@ -46,18 +67,21 @@ namespace Managers
 
         private void OnDestroy()
         {
-            playerInputActions.GamePlay.PauseGame.performed -= Pause_performed;
-            playerInputActions.GamePlay.MoveBlockLeft.performed -= MoveBlockLeft_performed;
-            playerInputActions.GamePlay.MoveBlockRight.performed -= MoveBlockRight_performed;
-            playerInputActions.GamePlay.RotateBlockLeft.performed -= RotateBlockLeft_performed;
-            playerInputActions.GamePlay.RotateBlockRight.performed -= RotateBlockRight_performed;
-            playerInputActions.GamePlay.DropBlockFast.performed -= DropBlockFast_performed;
-            playerInputActions.GamePlay.DropBlockFast.canceled -= DropBlockFast_canceled;
-            playerInputActions.GamePlay.Jump.performed -= Jump_performed;
-            playerInputActions.GamePlay.Cheat.performed -= Cheat_performed;
-            playerInputActions.GamePlay.Yes.performed -= YesPerformed;
-            playerInputActions.GamePlay.No.performed -= NoPerformed;
-            playerInputActions.Dispose();
+            if (playerInputActions != null)
+            {
+                playerInputActions.GamePlay.PauseGame.performed -= Pause_performed;
+                playerInputActions.GamePlay.MoveBlockLeft.performed -= MoveBlockLeft_performed;
+                playerInputActions.GamePlay.MoveBlockRight.performed -= MoveBlockRight_performed;
+                playerInputActions.GamePlay.RotateBlockLeft.performed -= RotateBlockLeft_performed;
+                playerInputActions.GamePlay.RotateBlockRight.performed -= RotateBlockRight_performed;
+                playerInputActions.GamePlay.DropBlockFast.performed -= DropBlockFast_performed;
+                playerInputActions.GamePlay.DropBlockFast.canceled -= DropBlockFast_canceled;
+                playerInputActions.GamePlay.Jump.performed -= Jump_performed;
+                playerInputActions.GamePlay.Cheat.performed -= Cheat_performed;
+                playerInputActions.GamePlay.Yes.performed -= YesPerformed;
+                playerInputActions.GamePlay.No.performed -= NoPerformed;
+                playerInputActions.Dispose();
+            }
         }
 
         public void DisableGameInput()

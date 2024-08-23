@@ -9,7 +9,7 @@ namespace TetrisCore
         public bool isGameStarted { get; private set; }
 
         public Board mainBoard;
-        public Ghost ghost;
+        // public Ghost ghost;
 
         public GameObject gameStartUI;
         public GameObject gameOverUI;
@@ -66,7 +66,7 @@ namespace TetrisCore
 
         public void Retry()
         {
-            ghost.Clear();
+            // ghost.Clear();
             mainBoard.SpawnPiece();
             // SetScore(0);
             isGameStarted = true;

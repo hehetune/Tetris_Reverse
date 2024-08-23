@@ -1,3 +1,5 @@
+using System;
+using Managers;
 using UnityEngine;
 
 namespace TetrisCore
@@ -7,11 +9,21 @@ namespace TetrisCore
         public Board board { get; private set; }
         public TetrominoData data { get; private set; }
         public Vector3Int[] cells { get; private set; }
-        public Vector3Int position { get; private set; }
+
+        private Vector3Int position;
+        public Vector3Int Position
+        {
+            get => position;
+            private set
+            {
+                position = value;
+                transform.position = position;
+            }
+        }
+
         public int rotationIndex { get; private set; }
 
-        private float[] stepDelay = new float[] { 0.5f, 0.45f, 0.4f, 0.35f, 0.3f, 0.25f, 0.2f, 0.15f, 0.1f };
-        private float[] lockDelay = new float[] { 0.55f, 0.5f, 0.45f, 0.4f, 0.35f, 0.3f, 0.25f, 0.2f, 0.15f };
+        private float[] stepDelay = new float[] { 0.8f, 0.75f, 0.70f, 0.65f, 0.6f, 0.55f, 0.5f, 0.45f, 0.4f };
         public float moveDelay = 0.1f;
         public float nextLevelDelay = 5f;
 
@@ -22,10 +34,38 @@ namespace TetrisCore
 
         private int currentLevel = 0;
 
+        // private bool _cacheCanMove = false;
+        // private Vector3Int _cacheNewPosition;
+        private Vector2Int _moveVector = Vector2Int.down;
+
+        public Block[] blocks = new Block[4];
+        [SerializeField] private Prefab _blockPrefab;
+
+        private bool _isSoftDropEnabled = false;
+
+        private void OnEnable()
+        {
+            GameInput.Instance.OnRotateBlockLeftAction += OnRotateBlockLeft;
+            GameInput.Instance.OnRotateBlockRightAction += OnRotateBlockRight;
+            GameInput.Instance.OnMoveBlockLeftAction += OnMoveLeft;
+            GameInput.Instance.OnMoveBlockRightAction += OnMoveRight;
+            GameInput.Instance.OnDropBlockFastAction += OnSoftDrop;
+            // GameInput.Instance.OnDropBlockFastCancel += OnRotateBlockLeft;
+        }
+
+        private void OnDisable()
+        {
+            GameInput.Instance.OnRotateBlockLeftAction -= OnRotateBlockLeft;
+            GameInput.Instance.OnRotateBlockRightAction -= OnRotateBlockRight;
+            GameInput.Instance.OnMoveBlockLeftAction -= OnMoveLeft;
+            GameInput.Instance.OnMoveBlockRightAction -= OnMoveRight;
+            GameInput.Instance.OnDropBlockFastAction -= OnSoftDrop;
+        }
+
         public void Initialize(Board board, Vector3Int position, TetrominoData data)
         {
             this.board = board;
-            this.position = position;
+            Position = position;
             this.data = data;
 
             this.rotationIndex = 0;
@@ -42,15 +82,15 @@ namespace TetrisCore
             {
                 this.cells[i] = (Vector3Int)data.cells[i];
             }
+
+            this.CreateBlocks();
+
+            CheckCanMove(_moveVector);
         }
-
-
 
         private void Update()
         {
             if (!TetrisGameManager.Instance.isGameStarted) return;
-
-            this.board.Clear(this);
 
             this.lockTime += Time.deltaTime;
 
@@ -65,100 +105,115 @@ namespace TetrisCore
                 }
             }
 
-            if (Input.GetKeyDown(KeyCode.Q))
-            {
-                Rotate(-1);
-            }
-            else if (Input.GetKeyDown(KeyCode.E))
-            {
-                Rotate(1);
-            }
-
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                HardDrop();
-            }
-
-            if (Time.time > moveTime)
-            {
-                HandleMoveInputs();
-            }
-
             if (Time.time >= this.stepTime)
             {
                 Step();
             }
-
-            this.board.Set(this);
         }
 
-        private void HandleMoveInputs()
+        private void OnRotateBlockLeft(object sender, EventArgs e)
         {
-            // Soft drop movement
-            if (Input.GetKey(KeyCode.S))
-            {
-                if (Move(Vector2Int.down))
-                {
-                    // Update the step time to prevent double movement
-                    stepTime = Time.time + stepDelay[currentLevel];
-                }
-            }
-
-            // Left/right movement
-            if (Input.GetKey(KeyCode.A))
-            {
-                Move(Vector2Int.left);
-            }
-            else if (Input.GetKey(KeyCode.D))
-            {
-                Move(Vector2Int.right);
-            }
+            Rotate(-1);
         }
+
+        private void OnRotateBlockRight(object sender, EventArgs e)
+        {
+            Rotate(1);
+        }
+
+        private void OnHardDrop(object sender, EventArgs e)
+        {
+            HardDrop();
+        }
+
+        private void OnSoftDrop(object sender, EventArgs e)
+        {
+            _isSoftDropEnabled = true;
+        }
+
+        private void OnMoveLeft(object sender, EventArgs e)
+        {
+            if (Time.time <= moveTime) return;
+            Move(Vector2Int.left);
+        }
+
+        private void OnMoveRight(object sender, EventArgs e)
+        {
+            if (Time.time <= moveTime) return;
+            Move(Vector2Int.right);
+        }
+
         private void Step()
         {
             this.stepTime = Time.time + this.stepDelay[currentLevel];
+            Move(_moveVector);
 
-            Move(Vector2Int.down);
-
-            if (this.lockTime >= this.lockDelay[currentLevel])
-            {
-                Lock();
-            }
+            if (!CheckCanMove(_moveVector)) Lock();
         }
 
         private void Lock()
         {
-            this.board.Set(this);
-            this.board.ClearLines();
+            // this.board.Set(this);
+            // this.board.ClearLines();
+            this.board.AddBlockToMatrix(this);
             this.board.SpawnPiece();
         }
 
         private void HardDrop()
         {
-            while (Move(Vector2Int.down))
-            {
-                continue;
-            }
+            while(CheckCanMove(_moveVector)) Move(_moveVector);
 
             Lock();
         }
 
-        private bool Move(Vector2Int translation)
+        private Block CreateBlock(Sprite sprite, Vector3Int position)
         {
-            Vector3Int newPosition = this.position;
+            PoolManager.Get<PoolObject>(_blockPrefab, out var blockGO);
+            blockGO.GetComponent<SpriteRenderer>().sprite = sprite;
+            Vector3 realPosition = position + Vector3.one * 0.5f;
+            blockGO.transform.parent = this.transform;
+            blockGO.transform.localPosition = realPosition;
+            blockGO.transform.rotation = Quaternion.identity;
+            return blockGO.GetComponent<Block>();
+            // blockGO.name = $"Block_{position.x}_{position.y}";
+        }
+
+        private void CreateBlocks()
+        {
+            for (int i = 0; i < cells.Length; i++)
+            {
+                Block block = CreateBlock(data.sprite, cells[i]);
+                this.blocks[i] = block;
+            }
+        }
+
+        private bool CheckCanMove(Vector2Int translation)
+        {
+            Vector3Int newPosition = GetPositionAfterTranslation(Position, translation);
             newPosition.x += translation.x;
             newPosition.y += translation.y;
 
-            bool valid = this.board.IsValidPosition(this, newPosition);
+            return this.board.IsValidPosition(this, newPosition);
+        }
 
-            if (valid)
+        private Vector3Int GetPositionAfterTranslation(Vector3Int curPosition, Vector2Int translation)
+        {
+            Vector3Int newPosition = Vector3Int.RoundToInt(transform.position);
+            newPosition.x += translation.x;
+            newPosition.y += translation.y;
+
+            return newPosition;
+        }
+
+        private void Move(Vector2Int translation)
+        {
+            if (CheckCanMove(translation))
             {
-                this.position = newPosition;
+                Vector3Int newPosition = GetPositionAfterTranslation(Position, translation);
+                Position = newPosition;
                 moveTime = Time.time + moveDelay;
                 this.lockTime = 0f;
             }
-
-            return valid;
         }
 
         private void Rotate(int direction)
@@ -214,7 +269,7 @@ namespace TetrisCore
             {
                 Vector2Int translation = this.data.wallKicks[wallKickIndex, i];
 
-                if (Move(translation)) return true;
+                if (CheckCanMove(translation)) return true;
             }
 
             return false;
