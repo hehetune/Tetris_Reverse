@@ -10,22 +10,19 @@ namespace TetrisCore
         public TetrominoData data { get; private set; }
         public Vector3Int[] cells { get; private set; }
 
-        private Vector3Int position;
         public Vector3Int Position
         {
-            get => position;
-            private set
-            {
-                position = value;
-                transform.position = position;
-            }
+            get => Vector3Int.RoundToInt(transform.position);
+            private set { transform.position = value; }
         }
 
         public int rotationIndex { get; private set; }
 
         private float[] stepDelay = new float[] { 0.8f, 0.75f, 0.70f, 0.65f, 0.6f, 0.55f, 0.5f, 0.45f, 0.4f };
+        private float fastStepDelay = 0.07f;
         public float moveDelay = 0.1f;
         public float nextLevelDelay = 5f;
+        private bool softDropEnabled = false;
 
         private float stepTime;
         private float lockTime;
@@ -41,16 +38,15 @@ namespace TetrisCore
         public Block[] blocks = new Block[4];
         [SerializeField] private Prefab _blockPrefab;
 
-        private bool _isSoftDropEnabled = false;
-
         private void OnEnable()
         {
             GameInput.Instance.OnRotateBlockLeftAction += OnRotateBlockLeft;
             GameInput.Instance.OnRotateBlockRightAction += OnRotateBlockRight;
             GameInput.Instance.OnMoveBlockLeftAction += OnMoveLeft;
             GameInput.Instance.OnMoveBlockRightAction += OnMoveRight;
-            GameInput.Instance.OnDropBlockFastAction += OnSoftDrop;
-            // GameInput.Instance.OnDropBlockFastCancel += OnRotateBlockLeft;
+            GameInput.Instance.OnBlockSoftDropAction += OnSoftDropPerformed;
+            GameInput.Instance.OnBlockSoftDropCancel += OnSoftDropCanceled;
+            GameInput.Instance.OnBlockHardDropAction += OnHardDrop;
         }
 
         private void OnDisable()
@@ -59,7 +55,9 @@ namespace TetrisCore
             GameInput.Instance.OnRotateBlockRightAction -= OnRotateBlockRight;
             GameInput.Instance.OnMoveBlockLeftAction -= OnMoveLeft;
             GameInput.Instance.OnMoveBlockRightAction -= OnMoveRight;
-            GameInput.Instance.OnDropBlockFastAction -= OnSoftDrop;
+            GameInput.Instance.OnBlockSoftDropAction -= OnSoftDropPerformed;
+            GameInput.Instance.OnBlockSoftDropCancel -= OnSoftDropCanceled;
+            GameInput.Instance.OnBlockHardDropAction -= OnHardDrop;
         }
 
         public void Initialize(Board board, Vector3Int position, TetrominoData data)
@@ -94,74 +92,92 @@ namespace TetrisCore
 
             this.lockTime += Time.deltaTime;
 
-            if (this.currentLevel < this.stepDelay.Length - 1)
-            {
-                this.nextLevelTime += Time.deltaTime;
-
-                if (nextLevelTime >= nextLevelDelay)
-                {
-                    currentLevel++;
-                    nextLevelTime = 0f;
-                }
-            }
-
-            if (Time.time >= this.stepTime)
-            {
-                Step();
-            }
+            // if (this.currentLevel < this.stepDelay.Length - 1)
+            // {
+            //     this.nextLevelTime += Time.deltaTime;
+            //
+            //     if (nextLevelTime >= nextLevelDelay)
+            //     {
+            //         currentLevel++;
+            //         nextLevelTime = 0f;
+            //     }
+            // }
+            //
+            // if (Time.time >= this.stepTime)
+            // {
+            //     Step();
+            // }
         }
 
         private void OnRotateBlockLeft(object sender, EventArgs e)
         {
+            Debug.Log("Piece::OnRotateBlockLeft");
             Rotate(-1);
         }
 
         private void OnRotateBlockRight(object sender, EventArgs e)
         {
+            Debug.Log("Piece::OnRotateBlockRight");
             Rotate(1);
         }
 
         private void OnHardDrop(object sender, EventArgs e)
         {
+            Debug.Log("Piece::OnHardDrop at " + Time.time);
             HardDrop();
         }
 
-        private void OnSoftDrop(object sender, EventArgs e)
+        private void OnSoftDropPerformed(object sender, EventArgs e)
         {
-            _isSoftDropEnabled = true;
+            Debug.Log("Piece::OnSoftDropPerformed");
+            softDropEnabled = true;
+            if (this.stepTime - Time.time > this.fastStepDelay) this.stepTime = Time.time + fastStepDelay;
+        }
+
+        private void OnSoftDropCanceled(object sender, EventArgs e)
+        {
+            Debug.Log("Piece::OnSoftDropCanceled");
+            softDropEnabled = false;
         }
 
         private void OnMoveLeft(object sender, EventArgs e)
         {
             if (Time.time <= moveTime) return;
+            Debug.Log("Piece::OnMoveLeft");
             Move(Vector2Int.left);
         }
 
         private void OnMoveRight(object sender, EventArgs e)
         {
             if (Time.time <= moveTime) return;
+            Debug.Log("Piece::OnMoveRight");
             Move(Vector2Int.right);
         }
 
         private void Step()
         {
-            this.stepTime = Time.time + this.stepDelay[currentLevel];
+            if (softDropEnabled) this.stepTime = Time.time + this.fastStepDelay;
+            else this.stepTime = Time.time + this.stepDelay[currentLevel];
             Move(_moveVector);
 
-            if (!CheckCanMove(_moveVector)) Lock();
+            if (!CheckCanMove(_moveVector))
+            {
+                Lock();
+            }
         }
 
         private void Lock()
         {
-            // this.board.Set(this);
-            // this.board.ClearLines();
-            this.board.AddBlockToMatrix(this);
+            // this.board.AddBlockToMatrix(this);
+            foreach(Transform t in this.transform) Destroy(t.gameObject);
             this.board.SpawnPiece();
         }
 
         private void HardDrop()
         {
-            while(CheckCanMove(_moveVector)) Move(_moveVector);
+            while (Move(_moveVector))
+            {
+            }
 
             Lock();
         }
@@ -190,8 +206,7 @@ namespace TetrisCore
         private bool CheckCanMove(Vector2Int translation)
         {
             Vector3Int newPosition = GetPositionAfterTranslation(Position, translation);
-            newPosition.x += translation.x;
-            newPosition.y += translation.y;
+            Debug.Log(newPosition);
 
             return this.board.IsValidPosition(this, newPosition);
         }
@@ -205,15 +220,15 @@ namespace TetrisCore
             return newPosition;
         }
 
-        private void Move(Vector2Int translation)
+        private bool Move(Vector2Int translation)
         {
-            if (CheckCanMove(translation))
-            {
-                Vector3Int newPosition = GetPositionAfterTranslation(Position, translation);
-                Position = newPosition;
-                moveTime = Time.time + moveDelay;
-                this.lockTime = 0f;
-            }
+            if (!CheckCanMove(translation)) return false;
+
+            Vector3Int newPosition = GetPositionAfterTranslation(Position, translation);
+            Position = newPosition;
+            moveTime = Time.time + moveDelay;
+            this.lockTime = 0f;
+            return true;
         }
 
         private void Rotate(int direction)
@@ -228,6 +243,8 @@ namespace TetrisCore
                 this.rotationIndex = originalRotation;
                 ApplyRotationMatrix(-direction);
             }
+
+            UpdateBlocksPosition();
         }
 
         private void ApplyRotationMatrix(int direction)
@@ -245,8 +262,8 @@ namespace TetrisCore
                     case Tetromino.I:
                     case Tetromino.O:
                         // "I" and "O" are rotated from an offset center point
-                        cell.x -= 0.5f;
-                        cell.y -= 0.5f;
+                        // cell.x -= 0.5f;
+                        // cell.y -= 0.5f;
                         x = Mathf.CeilToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
                         y = Mathf.CeilToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
                         break;
@@ -273,6 +290,17 @@ namespace TetrisCore
             }
 
             return false;
+        }
+
+        private void UpdateBlocksPosition()
+        {
+            int i = 0;
+            foreach (Transform t in this.transform)
+            {
+                Vector3 realPosition = cells[i] + Vector3.one * 0.5f;
+                t.localPosition = realPosition;
+                i++;
+            }
         }
 
         private int GetWallKickIndex(int rotationIndex, int rotationDirection)

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityCommunity.UnitySingleton;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Managers
 {
@@ -60,6 +61,11 @@ namespace Managers
                 case GameState.DEFAULT: break;
                 default: break;
             }
+        }
+        
+        public void Restart()
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
 
         private void StartCountDown()

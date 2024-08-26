@@ -1,37 +1,47 @@
 ﻿using System;
+using UnityCommunity.UnitySingleton;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Managers
 {
-    public class GameInput : MonoBehaviour
+    public class GameInput : MonoSingleton<GameInput>
     {
-        private static GameInput instance;
-        public static GameInput Instance 
-        {
-            get 
-            {
-                if (instance == null)
-                {
-                    instance = FindObjectOfType<GameInput>();
-                    if (instance == null)
-                    {
-                        GameObject obj = new GameObject("GameInput");
-                        instance = obj.AddComponent<GameInput>();
-                    }
-                }
-                return instance;
-            }
-        }
+        // private static GameInput instance;
+        // public static GameInput Instance 
+        // {
+        //     get 
+        //     {
+        //         if (firsttimecallInstance)
+        //         {
+        //             Debug.LogError("first time call GameInput instance");
+        //             firsttimecallInstance = false;
+        //         }
+        //         if (instance == null)
+        //         {
+        //             Debug.LogError("GameInput's Instance null, try to find it's object");
+        //             instance = FindObjectOfType<GameInput>();
+        //             if (instance == null)
+        //             {
+        //                 Debug.LogError("Can't find it's object, create new object");
+        //                 GameObject obj = new GameObject("GameInput");
+        //                 instance = obj.AddComponent<GameInput>();
+        //             }
+        //         }
+        //         return instance;
+        //     }
+        // }
 
+        private static bool firsttimecallInstance = true;
         public event EventHandler OnInteractAction;
         public event EventHandler OnPauseAction;
         public event EventHandler OnMoveBlockLeftAction;
         public event EventHandler OnMoveBlockRightAction;
         public event EventHandler OnRotateBlockLeftAction;
         public event EventHandler OnRotateBlockRightAction;
-        public event EventHandler OnDropBlockFastAction;
-        public event EventHandler OnDropBlockFastCancel;
+        public event EventHandler OnBlockSoftDropAction;
+        public event EventHandler OnBlockSoftDropCancel;
+        public event EventHandler OnBlockHardDropAction;
 
         public event EventHandler OnCheatAction;
 
@@ -44,12 +54,12 @@ namespace Managers
 
         private void Awake()
         {
-            if(instance!=null)
-            {
-                Destroy(this.gameObject);
-                return;
-            }
-            instance = this;
+            // if(instance!=null)
+            // {
+            //     Destroy(this.gameObject);
+            //     return;
+            // }
+            // instance = this;
             playerInputActions = new PlayerInputActions();
             playerInputActions.GamePlay.Enable();
             playerInputActions.GamePlay.PauseGame.performed += Pause_performed;
@@ -57,8 +67,9 @@ namespace Managers
             playerInputActions.GamePlay.MoveBlockRight.performed += MoveBlockRight_performed;
             playerInputActions.GamePlay.RotateBlockLeft.performed += RotateBlockLeft_performed;
             playerInputActions.GamePlay.RotateBlockRight.performed += RotateBlockRight_performed;
-            playerInputActions.GamePlay.DropBlockFast.performed += DropBlockFast_performed;
-            playerInputActions.GamePlay.DropBlockFast.canceled += DropBlockFast_canceled;
+            playerInputActions.GamePlay.BlockSoftDrop.performed += BlockSoftDrop_performed;
+            playerInputActions.GamePlay.BlockSoftDrop.canceled += BlockSoftDrop_canceled;
+            playerInputActions.GamePlay.BlockHardDrop.performed += BlockHardDrop_performed;
             playerInputActions.GamePlay.Jump.performed += Jump_performed;
             playerInputActions.GamePlay.Cheat.performed += Cheat_performed;
             playerInputActions.GamePlay.Yes.performed += YesPerformed;
@@ -74,8 +85,9 @@ namespace Managers
                 playerInputActions.GamePlay.MoveBlockRight.performed -= MoveBlockRight_performed;
                 playerInputActions.GamePlay.RotateBlockLeft.performed -= RotateBlockLeft_performed;
                 playerInputActions.GamePlay.RotateBlockRight.performed -= RotateBlockRight_performed;
-                playerInputActions.GamePlay.DropBlockFast.performed -= DropBlockFast_performed;
-                playerInputActions.GamePlay.DropBlockFast.canceled -= DropBlockFast_canceled;
+                playerInputActions.GamePlay.BlockSoftDrop.performed -= BlockSoftDrop_performed;
+                playerInputActions.GamePlay.BlockSoftDrop.canceled -= BlockSoftDrop_canceled;
+                playerInputActions.GamePlay.BlockHardDrop.performed -= BlockHardDrop_performed;
                 playerInputActions.GamePlay.Jump.performed -= Jump_performed;
                 playerInputActions.GamePlay.Cheat.performed -= Cheat_performed;
                 playerInputActions.GamePlay.Yes.performed -= YesPerformed;
@@ -101,6 +113,7 @@ namespace Managers
 
         private void MoveBlockRight_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
         {
+            Debug.LogError("GameInput::MoveBlockRight_performed");
             OnMoveBlockRightAction?.Invoke(this, EventArgs.Empty);
         }
 
@@ -114,16 +127,21 @@ namespace Managers
             OnRotateBlockRightAction?.Invoke(this, EventArgs.Empty);
         }
 
-        private void DropBlockFast_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
+        private void BlockSoftDrop_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
         {
-            OnDropBlockFastAction?.Invoke(this, EventArgs.Empty);
+            OnBlockSoftDropAction?.Invoke(this, EventArgs.Empty);
         }
 
-        private void DropBlockFast_canceled(UnityEngine.InputSystem.InputAction.CallbackContext obj)
+        private void BlockSoftDrop_canceled(UnityEngine.InputSystem.InputAction.CallbackContext obj)
         {
-            OnDropBlockFastCancel?.Invoke(this, EventArgs.Empty);
+            OnBlockSoftDropCancel?.Invoke(this, EventArgs.Empty);
         }
-
+        
+        private void BlockHardDrop_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
+        {
+            OnBlockHardDropAction?.Invoke(this, EventArgs.Empty);
+        }
+        
         private void Jump_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
         {
             OnJumpAction?.Invoke(this, EventArgs.Empty);

@@ -42,7 +42,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "DropBlockFast",
+                    "name": "BlockSoftDrop",
                     "type": "Button",
                     "id": "0afa0461-fe4a-49a9-8364-a2314fe167fd",
                     "expectedControlType": "Button",
@@ -103,6 +103,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "BlockHardDrop",
+                    "type": "Button",
+                    "id": "6e139bca-0bb4-4fdd-adf0-39736b643a00",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -157,7 +166,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "DropBlockFast",
+                    "action": "BlockSoftDrop",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -270,6 +279,17 @@
                     "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "8b8e498d-165d-45a2-93d3-3d4cde8087fc",
+                    "path": "<Keyboard>/enter",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "BlockHardDrop",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         }

@@ -64,7 +64,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""DropBlockFast"",
+                    ""name"": ""BlockSoftDrop"",
                     ""type"": ""Button"",
                     ""id"": ""0afa0461-fe4a-49a9-8364-a2314fe167fd"",
                     ""expectedControlType"": ""Button"",
@@ -125,6 +125,15 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""BlockHardDrop"",
+                    ""type"": ""Button"",
+                    ""id"": ""6e139bca-0bb4-4fdd-adf0-39736b643a00"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -179,7 +188,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""DropBlockFast"",
+                    ""action"": ""BlockSoftDrop"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -292,6 +301,17 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""action"": ""Move"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8b8e498d-165d-45a2-93d3-3d4cde8087fc"",
+                    ""path"": ""<Keyboard>/enter"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""BlockHardDrop"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -304,13 +324,14 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         m_GamePlay_MoveBlockRight = m_GamePlay.FindAction("MoveBlockRight", throwIfNotFound: true);
         m_GamePlay_RotateBlockLeft = m_GamePlay.FindAction("RotateBlockLeft", throwIfNotFound: true);
         m_GamePlay_RotateBlockRight = m_GamePlay.FindAction("RotateBlockRight", throwIfNotFound: true);
-        m_GamePlay_DropBlockFast = m_GamePlay.FindAction("DropBlockFast", throwIfNotFound: true);
+        m_GamePlay_BlockSoftDrop = m_GamePlay.FindAction("BlockSoftDrop", throwIfNotFound: true);
         m_GamePlay_Jump = m_GamePlay.FindAction("Jump", throwIfNotFound: true);
         m_GamePlay_PauseGame = m_GamePlay.FindAction("PauseGame", throwIfNotFound: true);
         m_GamePlay_Cheat = m_GamePlay.FindAction("Cheat", throwIfNotFound: true);
         m_GamePlay_Yes = m_GamePlay.FindAction("Yes", throwIfNotFound: true);
         m_GamePlay_No = m_GamePlay.FindAction("No", throwIfNotFound: true);
         m_GamePlay_Move = m_GamePlay.FindAction("Move", throwIfNotFound: true);
+        m_GamePlay_BlockHardDrop = m_GamePlay.FindAction("BlockHardDrop", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -376,13 +397,14 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_GamePlay_MoveBlockRight;
     private readonly InputAction m_GamePlay_RotateBlockLeft;
     private readonly InputAction m_GamePlay_RotateBlockRight;
-    private readonly InputAction m_GamePlay_DropBlockFast;
+    private readonly InputAction m_GamePlay_BlockSoftDrop;
     private readonly InputAction m_GamePlay_Jump;
     private readonly InputAction m_GamePlay_PauseGame;
     private readonly InputAction m_GamePlay_Cheat;
     private readonly InputAction m_GamePlay_Yes;
     private readonly InputAction m_GamePlay_No;
     private readonly InputAction m_GamePlay_Move;
+    private readonly InputAction m_GamePlay_BlockHardDrop;
     public struct GamePlayActions
     {
         private @PlayerInputActions m_Wrapper;
@@ -391,13 +413,14 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         public InputAction @MoveBlockRight => m_Wrapper.m_GamePlay_MoveBlockRight;
         public InputAction @RotateBlockLeft => m_Wrapper.m_GamePlay_RotateBlockLeft;
         public InputAction @RotateBlockRight => m_Wrapper.m_GamePlay_RotateBlockRight;
-        public InputAction @DropBlockFast => m_Wrapper.m_GamePlay_DropBlockFast;
+        public InputAction @BlockSoftDrop => m_Wrapper.m_GamePlay_BlockSoftDrop;
         public InputAction @Jump => m_Wrapper.m_GamePlay_Jump;
         public InputAction @PauseGame => m_Wrapper.m_GamePlay_PauseGame;
         public InputAction @Cheat => m_Wrapper.m_GamePlay_Cheat;
         public InputAction @Yes => m_Wrapper.m_GamePlay_Yes;
         public InputAction @No => m_Wrapper.m_GamePlay_No;
         public InputAction @Move => m_Wrapper.m_GamePlay_Move;
+        public InputAction @BlockHardDrop => m_Wrapper.m_GamePlay_BlockHardDrop;
         public InputActionMap Get() { return m_Wrapper.m_GamePlay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -419,9 +442,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @RotateBlockRight.started += instance.OnRotateBlockRight;
             @RotateBlockRight.performed += instance.OnRotateBlockRight;
             @RotateBlockRight.canceled += instance.OnRotateBlockRight;
-            @DropBlockFast.started += instance.OnDropBlockFast;
-            @DropBlockFast.performed += instance.OnDropBlockFast;
-            @DropBlockFast.canceled += instance.OnDropBlockFast;
+            @BlockSoftDrop.started += instance.OnBlockSoftDrop;
+            @BlockSoftDrop.performed += instance.OnBlockSoftDrop;
+            @BlockSoftDrop.canceled += instance.OnBlockSoftDrop;
             @Jump.started += instance.OnJump;
             @Jump.performed += instance.OnJump;
             @Jump.canceled += instance.OnJump;
@@ -440,6 +463,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Move.started += instance.OnMove;
             @Move.performed += instance.OnMove;
             @Move.canceled += instance.OnMove;
+            @BlockHardDrop.started += instance.OnBlockHardDrop;
+            @BlockHardDrop.performed += instance.OnBlockHardDrop;
+            @BlockHardDrop.canceled += instance.OnBlockHardDrop;
         }
 
         private void UnregisterCallbacks(IGamePlayActions instance)
@@ -456,9 +482,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @RotateBlockRight.started -= instance.OnRotateBlockRight;
             @RotateBlockRight.performed -= instance.OnRotateBlockRight;
             @RotateBlockRight.canceled -= instance.OnRotateBlockRight;
-            @DropBlockFast.started -= instance.OnDropBlockFast;
-            @DropBlockFast.performed -= instance.OnDropBlockFast;
-            @DropBlockFast.canceled -= instance.OnDropBlockFast;
+            @BlockSoftDrop.started -= instance.OnBlockSoftDrop;
+            @BlockSoftDrop.performed -= instance.OnBlockSoftDrop;
+            @BlockSoftDrop.canceled -= instance.OnBlockSoftDrop;
             @Jump.started -= instance.OnJump;
             @Jump.performed -= instance.OnJump;
             @Jump.canceled -= instance.OnJump;
@@ -477,6 +503,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Move.started -= instance.OnMove;
             @Move.performed -= instance.OnMove;
             @Move.canceled -= instance.OnMove;
+            @BlockHardDrop.started -= instance.OnBlockHardDrop;
+            @BlockHardDrop.performed -= instance.OnBlockHardDrop;
+            @BlockHardDrop.canceled -= instance.OnBlockHardDrop;
         }
 
         public void RemoveCallbacks(IGamePlayActions instance)
@@ -500,12 +529,13 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         void OnMoveBlockRight(InputAction.CallbackContext context);
         void OnRotateBlockLeft(InputAction.CallbackContext context);
         void OnRotateBlockRight(InputAction.CallbackContext context);
-        void OnDropBlockFast(InputAction.CallbackContext context);
+        void OnBlockSoftDrop(InputAction.CallbackContext context);
         void OnJump(InputAction.CallbackContext context);
         void OnPauseGame(InputAction.CallbackContext context);
         void OnCheat(InputAction.CallbackContext context);
         void OnYes(InputAction.CallbackContext context);
         void OnNo(InputAction.CallbackContext context);
         void OnMove(InputAction.CallbackContext context);
+        void OnBlockHardDrop(InputAction.CallbackContext context);
     }
 }

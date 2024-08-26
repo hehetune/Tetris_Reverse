@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Managers;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 namespace TetrisCore
@@ -23,15 +24,17 @@ namespace TetrisCore
         public int XMin => _xMin;
         public int XMax => _xMax;
         public int YMin => _yMin;
-        [SerializeField] private int _startRowsNum = 20;
+        public int YMax => highestYOfBLocks + Mathf.RoundToInt(spawnOffsetPointTransform.transform.position.y) + 1 + pieceYPrefix;
 
         private int currentPieceIndex = 0;
         private int nextPieceIndex = 0;
         [SerializeField] private List<BlockRow> _blockRows = new List<BlockRow>();
 
+        private int pieceYPrefix = 1;
+
         private bool IsWithinBoard(Vector3Int pos)
         {
-            return pos.x >= _xMin && pos.x <= _xMax && pos.y >= _yMin;
+            return pos.x >= _xMin && pos.x < _xMax && pos.y >= _yMin && pos.y < YMax;
         }
 
         private void Awake()
@@ -44,7 +47,7 @@ namespace TetrisCore
                 this.tetrominoes[i].Initialize();
             }
 
-            for (int i = _yMin; i <= _startRowsNum; i++)
+            for (int i = _yMin; i <= spawnOffsetPointTransform.position.y + 1 + pieceYPrefix; i++)
             {
                 BlockRow row = new()
                 {
@@ -55,15 +58,41 @@ namespace TetrisCore
             }
         }
 
+        // private void Update()
+        // {
+        //     
+        // }
+
+        private void IncreaseRowNumber()
+        {
+            int rowsToAdd = Mathf.CeilToInt(highestYOfBLocks + spawnOffsetPointTransform.transform.position.y + 1 + pieceYPrefix) - _blockRows.Count;
+
+            if (rowsToAdd > 0)
+            {
+                for (int i = 0; i < rowsToAdd; i++)
+                {
+                    _blockRows.Add(new()
+                    {
+                        cols = new Block[boardWidth]
+                    });
+                }
+            }
+        }
+
         public bool IsValidPosition(Piece piece, Vector3Int position)
         {
             for (int i = 0; i < piece.cells.Length; i++)
             {
                 Vector3Int tilePosition = piece.cells[i] + position;
-                    // Debug.Log("Board::IsValidPosition --- tilePosition: " + tilePosition);
-                if (!IsWithinBoard(tilePosition)) return false;
+                if (!IsWithinBoard(tilePosition))
+                {
+                    return false;
+                }
 
-                if (HasBlock(tilePosition)) return false;
+                if (HasBlock(tilePosition))
+                {
+                    return false;
+                }
             }
 
             return true;
@@ -88,8 +117,6 @@ namespace TetrisCore
             {
                 piece.blocks[i].transform.parent = this.transform;
                 int y = piece.cells[i].y + piece.Position.y, x = piece.cells[i].x + piece.Position.x;
-                Debug.LogError("y: " + y);
-                Debug.LogError("x: " + x);
                 _blockRows[y].cols[x] = piece.blocks[i];
                 piece.blocks[i] = null;
 
@@ -99,6 +126,7 @@ namespace TetrisCore
 
         public void SpawnPiece()
         {
+            IncreaseRowNumber();
             GetNextRandomPieceIndex();
             TetrominoData data = this.tetrominoes[currentPieceIndex];
 
@@ -165,7 +193,7 @@ namespace TetrisCore
                     Vector3Int abovePosition = new Vector3Int(col, row + 1, 0);
                     Vector3Int currentPosition = new Vector3Int(col, row, 0);
 
-                    MoveSprite(abovePosition, currentPosition);
+                    MoveBlock(abovePosition, currentPosition);
                 }
 
                 row++;
@@ -183,7 +211,7 @@ namespace TetrisCore
             return _blockRows[position.y].cols[position.x] != null;
         }
 
-        private void MoveSprite(Vector3Int fromPosition, Vector3Int toPosition)
+        private void MoveBlock(Vector3Int fromPosition, Vector3Int toPosition)
         {
             Block child = _blockRows[fromPosition.y].cols[fromPosition.x];
             if (child != null)
