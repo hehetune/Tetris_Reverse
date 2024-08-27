@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using TetrisCore;
 using UnityCommunity.UnitySingleton;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -63,7 +64,7 @@ namespace Managers
             }
         }
         
-        public void Restart()
+        public void ReloadScene()
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
@@ -78,16 +79,19 @@ namespace Managers
             _gameState = GameState.PLAYING;
         }
 
-        public void TogglePauseGame()
+        public void StartGame()
         {
-            if (_gameState == GameState.PAUSED)
-            {
-                _gameState = GameState.PLAYING;
-            }
-            else
-            {
-                _gameState = GameState.PAUSED;
-            }
+            TetrisGameManager.Instance.StartGame();
+        }
+
+        public void StopGame()
+        {
+            TetrisGameManager.Instance.StopGame();
+        }
+
+        public void ResumeGame()
+        {
+            TetrisGameManager.Instance.ResumeGame();
         }
     }
 }

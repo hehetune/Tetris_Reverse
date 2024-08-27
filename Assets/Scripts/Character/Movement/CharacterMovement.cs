@@ -13,6 +13,8 @@ namespace Character.Movement
         [Header("Movement Settings")] [SerializeField]
         private Rigidbody2D _rb;
 
+        public Rigidbody2D Rb => this._rb;
+
         [SerializeField] private float moveSpeed = 6f;
         [SerializeField] private float jumpHeight = 700f;
         [SerializeField] private float gravityScale = 3f;
@@ -54,6 +56,8 @@ namespace Character.Movement
 
         public bool Grounded => _grounded;
         public bool IsSliding => _isSliding;
+
+        private bool _isOnWater = true;
 
         private void Awake()
         {
@@ -212,7 +216,7 @@ namespace Character.Movement
 
         private IEnumerator SpawnGroundEffect()
         {
-            while (_grounded && MoveInput.x != 0)
+            while (_grounded && !_isOnWater && MoveInput.x != 0)
             {
                 PoolManager.Get<PoolObject>(_groundParticlePrefab, out var effectGo);
                 effectGo.transform.position = _groundEffectPosition.position;
@@ -236,6 +240,22 @@ namespace Character.Movement
             }
 
             _wallEffectCoroutine = null;
+        }
+
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            if (other.gameObject.tag.Equals("Larva"))
+            {
+                _isOnWater = true;
+            }
+        }
+        
+        private void OnTriggerExit2D(Collider2D other)
+        {
+            if (other.gameObject.tag.Equals("Larva"))
+            {
+                _isOnWater = false;
+            }
         }
     }
 }

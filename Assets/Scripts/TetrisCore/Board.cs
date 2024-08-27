@@ -58,6 +58,17 @@ namespace TetrisCore
             }
         }
 
+        private void OnEnable()
+        {
+            TetrisGameManager.Instance.OnGameStart += OnGameStart;
+            TetrisGameManager.Instance.OnGameStop += OnGameStop;
+        }
+
+        private void OnDisable()
+        {
+            
+        }
+
         // private void Update()
         // {
         //     
@@ -79,18 +90,20 @@ namespace TetrisCore
             }
         }
 
-        public bool IsValidPosition(Piece piece, Vector3Int position)
+        public bool IsValidPosition(Piece piece, Vector3Int position, bool log = false)
         {
             for (int i = 0; i < piece.cells.Length; i++)
             {
                 Vector3Int tilePosition = piece.cells[i] + position;
                 if (!IsWithinBoard(tilePosition))
                 {
+                    if(log) Debug.LogError("!IsWithinBoard(tilePosition) " + tilePosition);
                     return false;
                 }
 
                 if (HasBlock(tilePosition))
                 {
+                    if(log) Debug.LogError("HasBlock(tilePosition)");
                     return false;
                 }
             }
@@ -98,10 +111,18 @@ namespace TetrisCore
             return true;
         }
 
-        public void StartGame()
+        private bool _isGameStarted = false;
+        private void OnGameStart()
         {
+            if (_isGameStarted) return;
             nextPieceIndex = Random.Range(0, tetrominoes.Length);
             SpawnPiece();
+            _isGameStarted = true;
+        }
+
+        private void OnGameStop()
+        {
+            
         }
 
         private void GetNextRandomPieceIndex()
@@ -113,6 +134,7 @@ namespace TetrisCore
 
         public void AddBlockToMatrix(Piece piece)
         {
+            int minY = int.MaxValue, maxY = int.MinValue;
             for (int i = 0; i < piece.blocks.Length; i++)
             {
                 piece.blocks[i].transform.parent = this.transform;
@@ -121,7 +143,11 @@ namespace TetrisCore
                 piece.blocks[i] = null;
 
                 highestYOfBLocks = Mathf.Max(highestYOfBLocks, piece.Position.y + piece.cells[i].y);
+                minY = Mathf.Min(minY, y);
+                maxY = Mathf.Max(maxY, y);
             }
+            Debug.LogError($"AddBlockToMatrix minY: ${minY}, maxY: ${maxY}");
+            ClearLines(minY, maxY);
         }
 
         public void SpawnPiece()
@@ -146,8 +172,8 @@ namespace TetrisCore
         {
             int row = startRow;
 
+            // if (IsLineFull(row)) LineClear(row);
             int linesClear = 0;
-
             while (row < endRow)
             {
                 if (IsLineFull(row))
@@ -160,7 +186,42 @@ namespace TetrisCore
                     row++;
                 }
             }
+
+            if (linesClear == 0) return;
+
+            row = startRow;
+            int emptyRows = 0;
+            while (row <= highestYOfBLocks)
+            {
+                bool isLineEmpty = true;
+                for (int col = _xMin; col < _xMax; col++)
+                {
+                    if (_blockRows[row].cols[col])
+                    {
+                        isLineEmpty = false;
+                        MoveBlock(col, row, col, row - emptyRows);
+                    }
+                }
+
+                if (isLineEmpty) emptyRows++;
+                row++;
+            }
             // if (linesClear > 0) TetrisGameManager.Instance.IncreaseScore(linesClear);
+        }
+
+        private bool IsLineEmpty(int row)
+        {
+            for (int col = _xMin; col < _xMax; col++)
+            {
+                Vector3Int position = new Vector3Int(col, row, 0);
+
+                if (HasBlock(position))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private bool IsLineFull(int row)
@@ -185,25 +246,17 @@ namespace TetrisCore
                 Vector3Int position = new Vector3Int(col, row, 0);
                 DestroyBlock(position);
             }
+            
+            Debug.Log($"Board::LineClear start row: ${row}, highestRow: ${highestYOfBLocks}");
 
-            while (row < highestYOfBLocks)
-            {
-                for (int col = _xMin; col < _xMax; col++)
-                {
-                    Vector3Int abovePosition = new Vector3Int(col, row + 1, 0);
-                    Vector3Int currentPosition = new Vector3Int(col, row, 0);
-
-                    MoveBlock(abovePosition, currentPosition);
-                }
-
-                row++;
-            }
+            
         }
 
         private void DestroyBlock(Vector3Int position)
         {
             Block block = _blockRows[position.y].cols[position.x];
             if (block) block.GetComponent<PoolObject>().ReturnToPool();
+            _blockRows[position.y].cols[position.x] = null;
         }
 
         private bool HasBlock(Vector3Int position)
@@ -211,13 +264,17 @@ namespace TetrisCore
             return _blockRows[position.y].cols[position.x] != null;
         }
 
-        private void MoveBlock(Vector3Int fromPosition, Vector3Int toPosition)
+        private void MoveBlock(int fromCol, int fromRow, int toCol, int toRow) //Vector3Int fromPosition, Vector3Int toPosition
         {
-            Block child = _blockRows[fromPosition.y].cols[fromPosition.x];
+            Block child = _blockRows[fromRow].cols[fromCol];
             if (child != null)
             {
-                child.transform.position = toPosition;
+                Debug.LogError($"Board::MoveBlock fromCol: ${fromCol}, fromRow: ${fromRow}, toCol: ${toCol}, toRow: ${toRow}");
+                child.transform.position = new Vector3(toCol + 0.5f, toRow + 0.5f, 0f);
             }
+
+            _blockRows[toRow].cols[toCol] = child;
+            _blockRows[fromRow].cols[fromCol] = null;
         }
 
         private void ClearBoard()

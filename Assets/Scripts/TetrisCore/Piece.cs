@@ -18,46 +18,66 @@ namespace TetrisCore
 
         public int rotationIndex { get; private set; }
 
-        private float[] stepDelay = new float[] { 0.8f, 0.75f, 0.70f, 0.65f, 0.6f, 0.55f, 0.5f, 0.45f, 0.4f };
-        private float fastStepDelay = 0.07f;
-        public float moveDelay = 0.1f;
-        public float nextLevelDelay = 5f;
-        private bool softDropEnabled = false;
+        [SerializeField] private float[] stepDelay = new float[] { 0.8f, 0.75f, 0.70f, 0.65f, 0.6f, 0.55f, 0.5f, 0.45f, 0.4f };
+        [SerializeField] private float fastStepDelay = 0.07f;
+        [SerializeField] public float moveDelay = 0.05f;
+        [SerializeField] private float nextLevelDelay = 5f;
+        [SerializeField] private float moveHoldingDelay = 0.2f;
 
         private float stepTime;
         private float lockTime;
         private float moveTime;
         private float nextLevelTime;
+        private float moveLeftHoldingTime;
+        private float moveRightHoldingTime;
+
+        private bool softDropEnabled = false;
+        private bool movingLeft = false;
+        private bool movingRight = false;
 
         private int currentLevel = 0;
 
-        // private bool _cacheCanMove = false;
-        // private Vector3Int _cacheNewPosition;
-        private Vector2Int _moveVector = Vector2Int.down;
+        private Vector2Int _moveDownVector = Vector2Int.down;
+        private Vector2Int _moveLeftVector = Vector2Int.left;
+        private Vector2Int _moveRightVector = Vector2Int.right;
 
         public Block[] blocks = new Block[4];
         [SerializeField] private Prefab _blockPrefab;
+
+        private bool _gameStop = true;
 
         private void OnEnable()
         {
             GameInput.Instance.OnRotateBlockLeftAction += OnRotateBlockLeft;
             GameInput.Instance.OnRotateBlockRightAction += OnRotateBlockRight;
-            GameInput.Instance.OnMoveBlockLeftAction += OnMoveLeft;
-            GameInput.Instance.OnMoveBlockRightAction += OnMoveRight;
+            GameInput.Instance.OnMoveBlockLeftPerformed += OnMoveLeftPerformed;
+            GameInput.Instance.OnMoveBlockLeftCancel += OnMoveLeftCancel;
+            GameInput.Instance.OnMoveBlockRightPerformed += OnMoveRightPerformed;
+            GameInput.Instance.OnMoveBlockRightCancel += OnMoveRightCancel;
             GameInput.Instance.OnBlockSoftDropAction += OnSoftDropPerformed;
             GameInput.Instance.OnBlockSoftDropCancel += OnSoftDropCanceled;
             GameInput.Instance.OnBlockHardDropAction += OnHardDrop;
+
+            TetrisGameManager.Instance.OnGameStart += OnGameStart;
+            TetrisGameManager.Instance.OnGameStop += OnGameStop;
+            TetrisGameManager.Instance.OnGameResume += OnGameResume;
         }
 
         private void OnDisable()
         {
             GameInput.Instance.OnRotateBlockLeftAction -= OnRotateBlockLeft;
             GameInput.Instance.OnRotateBlockRightAction -= OnRotateBlockRight;
-            GameInput.Instance.OnMoveBlockLeftAction -= OnMoveLeft;
-            GameInput.Instance.OnMoveBlockRightAction -= OnMoveRight;
+            GameInput.Instance.OnMoveBlockLeftPerformed -= OnMoveLeftPerformed;
+            GameInput.Instance.OnMoveBlockLeftCancel -= OnMoveLeftCancel;
+            GameInput.Instance.OnMoveBlockRightPerformed -= OnMoveRightPerformed;
+            GameInput.Instance.OnMoveBlockRightCancel -= OnMoveRightCancel;
             GameInput.Instance.OnBlockSoftDropAction -= OnSoftDropPerformed;
             GameInput.Instance.OnBlockSoftDropCancel -= OnSoftDropCanceled;
             GameInput.Instance.OnBlockHardDropAction -= OnHardDrop;
+            
+            TetrisGameManager.Instance.OnGameStart -= OnGameStart;
+            TetrisGameManager.Instance.OnGameStop -= OnGameStop;
+            TetrisGameManager.Instance.OnGameResume -= OnGameResume;
         }
 
         public void Initialize(Board board, Vector3Int position, TetrominoData data)
@@ -83,84 +103,115 @@ namespace TetrisCore
 
             this.CreateBlocks();
 
-            CheckCanMove(_moveVector);
+            CheckCanMove(_moveDownVector);
         }
 
         private void Update()
         {
-            if (!TetrisGameManager.Instance.isGameStarted) return;
+            if (_gameStop) return;
 
             this.lockTime += Time.deltaTime;
 
-            // if (this.currentLevel < this.stepDelay.Length - 1)
-            // {
-            //     this.nextLevelTime += Time.deltaTime;
-            //
-            //     if (nextLevelTime >= nextLevelDelay)
-            //     {
-            //         currentLevel++;
-            //         nextLevelTime = 0f;
-            //     }
-            // }
-            //
-            // if (Time.time >= this.stepTime)
-            // {
-            //     Step();
-            // }
+            if (this.currentLevel < this.stepDelay.Length - 1)
+            {
+                this.nextLevelTime += Time.deltaTime;
+            
+                if (nextLevelTime >= nextLevelDelay)
+                {
+                    currentLevel++;
+                    nextLevelTime = 0f;
+                }
+            }
+            
+            if (Time.time >= this.stepTime)
+            {
+                Step();
+            }
+
+            if (Time.time >= moveTime)
+            {
+                if (movingLeft && Time.time >= moveLeftHoldingTime) Move(Vector2Int.left);
+                if (movingRight && Time.time >= moveRightHoldingTime) Move(Vector2Int.right);
+            }
+        }
+
+        private void OnGameStop()
+        {
+            this._gameStop = true;
+        }
+
+        private void OnGameStart()
+        {
+            this._gameStop = false;
+        }
+
+        private void OnGameResume()
+        {
+            this._gameStop = false;
         }
 
         private void OnRotateBlockLeft(object sender, EventArgs e)
         {
-            Debug.Log("Piece::OnRotateBlockLeft");
+            // Debug.Log("Piece::OnRotateBlockLeft");
             Rotate(-1);
         }
 
         private void OnRotateBlockRight(object sender, EventArgs e)
         {
-            Debug.Log("Piece::OnRotateBlockRight");
+            // Debug.Log("Piece::OnRotateBlockRight");
             Rotate(1);
         }
 
         private void OnHardDrop(object sender, EventArgs e)
         {
-            Debug.Log("Piece::OnHardDrop at " + Time.time);
+            // Debug.Log("Piece::OnHardDrop at " + Time.time);
             HardDrop();
         }
 
         private void OnSoftDropPerformed(object sender, EventArgs e)
         {
-            Debug.Log("Piece::OnSoftDropPerformed");
+            // Debug.Log("Piece::OnSoftDropPerformed");
             softDropEnabled = true;
             if (this.stepTime - Time.time > this.fastStepDelay) this.stepTime = Time.time + fastStepDelay;
         }
 
         private void OnSoftDropCanceled(object sender, EventArgs e)
         {
-            Debug.Log("Piece::OnSoftDropCanceled");
+            // Debug.Log("Piece::OnSoftDropCanceled");
             softDropEnabled = false;
         }
 
-        private void OnMoveLeft(object sender, EventArgs e)
+        private void OnMoveLeftPerformed(object sender, EventArgs e)
         {
-            if (Time.time <= moveTime) return;
-            Debug.Log("Piece::OnMoveLeft");
-            Move(Vector2Int.left);
+            movingLeft = true;
+            Move(_moveLeftVector);
+            moveLeftHoldingTime = Time.time + moveHoldingDelay;
         }
 
-        private void OnMoveRight(object sender, EventArgs e)
+        private void OnMoveLeftCancel(object sender, EventArgs e)
         {
-            if (Time.time <= moveTime) return;
-            Debug.Log("Piece::OnMoveRight");
-            Move(Vector2Int.right);
+            movingLeft = false;
+        }
+
+        private void OnMoveRightPerformed(object sender, EventArgs e)
+        {
+            movingRight = true;
+            Move(_moveRightVector);
+            moveRightHoldingTime = Time.time + moveHoldingDelay;
+        }
+        
+        private void OnMoveRightCancel(object sender, EventArgs e)
+        {
+            movingRight = false;
         }
 
         private void Step()
         {
             if (softDropEnabled) this.stepTime = Time.time + this.fastStepDelay;
             else this.stepTime = Time.time + this.stepDelay[currentLevel];
-            Move(_moveVector);
+            Move(_moveDownVector);
 
-            if (!CheckCanMove(_moveVector))
+            if (!CheckCanMove(_moveDownVector))
             {
                 Lock();
             }
@@ -168,14 +219,14 @@ namespace TetrisCore
 
         private void Lock()
         {
-            // this.board.AddBlockToMatrix(this);
-            foreach(Transform t in this.transform) Destroy(t.gameObject);
+            this.board.AddBlockToMatrix(this);
+            // foreach (Transform t in this.transform) Destroy(t.gameObject);
             this.board.SpawnPiece();
         }
 
         private void HardDrop()
         {
-            while (Move(_moveVector))
+            while (Move(_moveDownVector))
             {
             }
 
@@ -191,7 +242,6 @@ namespace TetrisCore
             blockGO.transform.localPosition = realPosition;
             blockGO.transform.rotation = Quaternion.identity;
             return blockGO.GetComponent<Block>();
-            // blockGO.name = $"Block_{position.x}_{position.y}";
         }
 
         private void CreateBlocks()
@@ -206,14 +256,13 @@ namespace TetrisCore
         private bool CheckCanMove(Vector2Int translation)
         {
             Vector3Int newPosition = GetPositionAfterTranslation(Position, translation);
-            Debug.Log(newPosition);
 
             return this.board.IsValidPosition(this, newPosition);
         }
 
         private Vector3Int GetPositionAfterTranslation(Vector3Int curPosition, Vector2Int translation)
         {
-            Vector3Int newPosition = Vector3Int.RoundToInt(transform.position);
+            Vector3Int newPosition = Vector3Int.RoundToInt(curPosition);
             newPosition.x += translation.x;
             newPosition.y += translation.y;
 
@@ -233,18 +282,49 @@ namespace TetrisCore
 
         private void Rotate(int direction)
         {
-            int originalRotation = this.rotationIndex;
-            this.rotationIndex = Wrap(this.rotationIndex + direction, 0, 4);
-
-            ApplyRotationMatrix(direction);
-
-            if (!TestWallKicks(this.rotationIndex, direction))
+            // Debug.Log(this.cells[0] + " --- " + this.cells[1] + " --- " + this.cells[2] + " --- " + this.cells[3]);
+            int maxRotationIndex = GetMaxRotationIndex(data.tetromino);
+            if (maxRotationIndex == 4)
             {
-                this.rotationIndex = originalRotation;
+                ApplyRotationMatrix(direction);
+            }
+            else if (maxRotationIndex == 2)
+            {
+                int originalRotation = this.rotationIndex;
+                this.rotationIndex = Wrap(this.rotationIndex + direction, 0, GetMaxRotationIndex(data.tetromino));
+                direction *= (direction * (this.rotationIndex - originalRotation) > 0 ? 1 : -1);
+                ApplyRotationMatrix(direction);
+            }
+            else
+            {
+            }
+
+            if (maxRotationIndex != 1 && !this.board.IsValidPosition(this, Position))
+            {
                 ApplyRotationMatrix(-direction);
             }
 
+            // Debug.Log(this.cells[0] + " --- " + this.cells[1] + " --- " + this.cells[2] + " --- " + this.cells[3]);
             UpdateBlocksPosition();
+        }
+
+        private int GetMaxRotationIndex(Tetromino t)
+        {
+            switch (t)
+            {
+                case Tetromino.O:
+                    return 1;
+                case Tetromino.I:
+                case Tetromino.Z:
+                case Tetromino.S:
+                    return 2;
+                case Tetromino.J:
+                case Tetromino.L:
+                case Tetromino.T:
+                    return 4;
+            }
+
+            return 1;
         }
 
         private void ApplyRotationMatrix(int direction)
@@ -253,44 +333,46 @@ namespace TetrisCore
 
             for (int i = 0; i < this.cells.Length; i++)
             {
-                Vector3 cell = cells[i];
-
-                int x, y;
-
-                switch (data.tetromino)
-                {
-                    case Tetromino.I:
-                    case Tetromino.O:
-                        // "I" and "O" are rotated from an offset center point
-                        // cell.x -= 0.5f;
-                        // cell.y -= 0.5f;
-                        x = Mathf.CeilToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
-                        y = Mathf.CeilToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
-                        break;
-
-                    default:
-                        x = Mathf.RoundToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
-                        y = Mathf.RoundToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
-                        break;
-                }
+                // Vector3 cell = cells[i];
+                // int x, y;
+                // switch (data.tetromino)
+                // {
+                //     case Tetromino.I:
+                //     case Tetromino.O:
+                //         // "I" and "O" are rotated from an offset center point
+                //         // cell.x -= 0.5f;
+                //         // cell.y -= 0.5f;
+                //         // x = Mathf.CeilToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
+                //         // y = Mathf.CeilToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
+                //         x = Mathf.RoundToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
+                //         y = Mathf.RoundToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
+                //         break;
+                //
+                //     default:
+                //         x = Mathf.RoundToInt((cell.x * matrix[0] * direction) + (cell.y * matrix[1] * direction));
+                //         y = Mathf.RoundToInt((cell.x * matrix[2] * direction) + (cell.y * matrix[3] * direction));
+                //         break;
+                // }
+                int x = Mathf.RoundToInt((cells[i].x * matrix[0] * direction) + (cells[i].y * matrix[1] * direction));
+                int y = Mathf.RoundToInt((cells[i].x * matrix[2] * direction) + (cells[i].y * matrix[3] * direction));
 
                 cells[i] = new Vector3Int(x, y, 0);
             }
         }
 
-        private bool TestWallKicks(int rotationIndex, int rotationDirection)
-        {
-            int wallKickIndex = GetWallKickIndex(rotationIndex, rotationDirection);
-
-            for (int i = 0; i < this.data.wallKicks.GetLength(1); i++)
-            {
-                Vector2Int translation = this.data.wallKicks[wallKickIndex, i];
-
-                if (CheckCanMove(translation)) return true;
-            }
-
-            return false;
-        }
+        // private bool TestWallKicks(int rotationIndex, int rotationDirection)
+        // {
+            // int wallKickIndex = GetWallKickIndex(rotationIndex, rotationDirection);
+            //
+            // for (int i = 0; i < this.data.wallKicks.GetLength(1); i++)
+            // {
+            //     Vector2Int translation = this.data.wallKicks[wallKickIndex, i];
+            //
+            //     if (CheckCanMove(translation)) return true;
+            // }
+            //
+            // return false;
+        // }
 
         private void UpdateBlocksPosition()
         {
@@ -303,14 +385,14 @@ namespace TetrisCore
             }
         }
 
-        private int GetWallKickIndex(int rotationIndex, int rotationDirection)
-        {
-            int wallKickIndex = rotationIndex * 2;
-
-            if (rotationDirection < 0) wallKickIndex--;
-
-            return Wrap(wallKickIndex, 0, this.data.wallKicks.GetLength(0));
-        }
+        // private int GetWallKickIndex(int rotationIndex, int rotationDirection)
+        // {
+        //     int wallKickIndex = rotationIndex * 2;
+        //
+        //     if (rotationDirection < 0) wallKickIndex--;
+        //
+        //     return Wrap(wallKickIndex, 0, this.data.wallKicks.GetLength(0));
+        // }
 
         private int Wrap(int input, int min, int max)
         {

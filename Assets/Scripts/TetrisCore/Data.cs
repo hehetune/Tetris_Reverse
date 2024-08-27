@@ -7,14 +7,14 @@ namespace TetrisCore
     {
         private static readonly float Cos = Mathf.Cos(Mathf.PI / 2f);
         private static readonly float Sin = Mathf.Sin(Mathf.PI / 2f);
-        public static readonly float[] RotationMatrix = new float[] { Cos, Sin, -Sin, Cos };
+        public static readonly float[] RotationMatrix = new float[] { Cos, -Sin, Sin, Cos };
 
         public static readonly Dictionary<Tetromino, Vector2Int[]> Cells = new Dictionary<Tetromino, Vector2Int[]>()
         {
-            { Tetromino.I, new Vector2Int[] { new Vector2Int(-1, 0), new Vector2Int( 0, 0), new Vector2Int( 1, 0), new Vector2Int( 2, 0) } },
-            { Tetromino.J, new Vector2Int[] { new Vector2Int(-1, 1), new Vector2Int(-1, 0), new Vector2Int( 0, 0), new Vector2Int( 1, 0) } },
-            { Tetromino.L, new Vector2Int[] { new Vector2Int( 1, 1), new Vector2Int(-1, 0), new Vector2Int( 0, 0), new Vector2Int( 1, 0) } },
-            { Tetromino.O, new Vector2Int[] { new Vector2Int( 0, 1), new Vector2Int( 1, 1), new Vector2Int( 0, 0), new Vector2Int( 1, 0) } },
+            { Tetromino.I, new Vector2Int[] { new Vector2Int(-2, 0), new Vector2Int( -1, 0), new Vector2Int( 0, 0), new Vector2Int( 1, 0) } },
+            { Tetromino.J, new Vector2Int[] { new Vector2Int(0, 1), new Vector2Int(0, 0), new Vector2Int( 0, -1), new Vector2Int( -1, -1) } },
+            { Tetromino.L, new Vector2Int[] { new Vector2Int( -1, 1), new Vector2Int(-1, 0), new Vector2Int( 0, 0), new Vector2Int( 1, 0) } },
+            { Tetromino.O, new Vector2Int[] { new Vector2Int( 0, 1), new Vector2Int( 0, 0), new Vector2Int( -1, 0), new Vector2Int( -1, 1) } },
             { Tetromino.S, new Vector2Int[] { new Vector2Int( 0, 1), new Vector2Int( 1, 1), new Vector2Int(-1, 0), new Vector2Int( 0, 0) } },
             { Tetromino.T, new Vector2Int[] { new Vector2Int( 0, 1), new Vector2Int(-1, 0), new Vector2Int( 0, 0), new Vector2Int( 1, 0) } },
             { Tetromino.Z, new Vector2Int[] { new Vector2Int(-1, 1), new Vector2Int( 0, 1), new Vector2Int( 0, 0), new Vector2Int( 1, 0) } },

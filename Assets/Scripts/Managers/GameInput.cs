@@ -35,8 +35,10 @@ namespace Managers
         private static bool firsttimecallInstance = true;
         public event EventHandler OnInteractAction;
         public event EventHandler OnPauseAction;
-        public event EventHandler OnMoveBlockLeftAction;
-        public event EventHandler OnMoveBlockRightAction;
+        public event EventHandler OnMoveBlockLeftPerformed;
+        public event EventHandler OnMoveBlockLeftCancel;
+        public event EventHandler OnMoveBlockRightPerformed;
+        public event EventHandler OnMoveBlockRightCancel;
         public event EventHandler OnRotateBlockLeftAction;
         public event EventHandler OnRotateBlockRightAction;
         public event EventHandler OnBlockSoftDropAction;
@@ -64,7 +66,9 @@ namespace Managers
             playerInputActions.GamePlay.Enable();
             playerInputActions.GamePlay.PauseGame.performed += Pause_performed;
             playerInputActions.GamePlay.MoveBlockLeft.performed += MoveBlockLeft_performed;
+            playerInputActions.GamePlay.MoveBlockLeft.canceled += MoveBlockLeft_canceled;
             playerInputActions.GamePlay.MoveBlockRight.performed += MoveBlockRight_performed;
+            playerInputActions.GamePlay.MoveBlockRight.canceled += MoveBlockRight_canceled;
             playerInputActions.GamePlay.RotateBlockLeft.performed += RotateBlockLeft_performed;
             playerInputActions.GamePlay.RotateBlockRight.performed += RotateBlockRight_performed;
             playerInputActions.GamePlay.BlockSoftDrop.performed += BlockSoftDrop_performed;
@@ -82,7 +86,9 @@ namespace Managers
             {
                 playerInputActions.GamePlay.PauseGame.performed -= Pause_performed;
                 playerInputActions.GamePlay.MoveBlockLeft.performed -= MoveBlockLeft_performed;
+                playerInputActions.GamePlay.MoveBlockLeft.canceled -= MoveBlockLeft_canceled;
                 playerInputActions.GamePlay.MoveBlockRight.performed -= MoveBlockRight_performed;
+                playerInputActions.GamePlay.MoveBlockRight.canceled -= MoveBlockRight_canceled;
                 playerInputActions.GamePlay.RotateBlockLeft.performed -= RotateBlockLeft_performed;
                 playerInputActions.GamePlay.RotateBlockRight.performed -= RotateBlockRight_performed;
                 playerInputActions.GamePlay.BlockSoftDrop.performed -= BlockSoftDrop_performed;
@@ -108,13 +114,19 @@ namespace Managers
 
         private void MoveBlockLeft_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
         {
-            OnMoveBlockLeftAction?.Invoke(this, EventArgs.Empty);
+            OnMoveBlockLeftPerformed?.Invoke(this, EventArgs.Empty);
         }
-
+        private void MoveBlockLeft_canceled(UnityEngine.InputSystem.InputAction.CallbackContext obj)
+        {
+            OnMoveBlockLeftCancel?.Invoke(this, EventArgs.Empty);
+        }
         private void MoveBlockRight_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
         {
-            Debug.LogError("GameInput::MoveBlockRight_performed");
-            OnMoveBlockRightAction?.Invoke(this, EventArgs.Empty);
+            OnMoveBlockRightPerformed?.Invoke(this, EventArgs.Empty);
+        }
+        private void MoveBlockRight_canceled(UnityEngine.InputSystem.InputAction.CallbackContext obj)
+        {
+            OnMoveBlockRightCancel?.Invoke(this, EventArgs.Empty);
         }
 
         private void RotateBlockLeft_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
