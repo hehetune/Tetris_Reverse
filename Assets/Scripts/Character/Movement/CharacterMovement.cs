@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using Character.Health;
 using Managers;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ namespace Character.Movement
         public Rigidbody2D Rb => this._rb;
 
         [SerializeField] private float moveSpeed = 6f;
-        [SerializeField] private float jumpHeight = 700f;
+        [SerializeField] private float jumpForce = 700f;
         [SerializeField] private float gravityScale = 3f;
         [Range(0, 1)] [SerializeField] private float _slideSpeed = 0.5f;
         [Range(0, 0.3f)] [SerializeField] private float _movementSmoothing = 0.05f;
@@ -52,16 +53,21 @@ namespace Character.Movement
         private Coroutine _wallEffectCoroutine;
 
         private const float k_WallRadius = 0.2f;
-        private const float k_GroundedRadius = 0.27f;
+        private const float k_GroundedRadius = 0.2f;
 
         public bool Grounded => _grounded;
         public bool IsSliding => _isSliding;
 
         private bool _isOnWater = true;
 
+        private bool _isDisabled = false;
+
+        [SerializeField] private CharacterHealth _characterHealth; 
+
         private void Awake()
         {
             _availableJumps = totalJumps;
+            _characterHealth.OnDie += DisableThis;
         }
 
         private void Start()
@@ -81,6 +87,7 @@ namespace Character.Movement
 
         private void Update()
         {
+            if (_isDisabled) return;
             HandleMoveHorizontal();
             UpdateGroundedStatus();
             ApplyGravityScale();
@@ -90,6 +97,11 @@ namespace Character.Movement
         // private void FixedUpdate()
         // {
         // }
+
+        private void DisableThis()
+        {
+            this._isDisabled = true;
+        }
 
         private void HandleMoveHorizontal()
         {
@@ -145,7 +157,7 @@ namespace Character.Movement
         {
             _availableJumps--;
             _rb.velocity = new Vector2(_rb.velocity.x, 0f);
-            _rb.AddForce(Vector2.up * jumpHeight * alpha);
+            _rb.AddForce(Vector2.up * jumpForce * alpha);
         }
 
         private void HandleAirJump()
@@ -195,7 +207,7 @@ namespace Character.Movement
 
         private void HandleGroundEffect()
         {
-            if (_grounded && MoveInput.x != 0 && _groundEffectCoroutine == null)
+            if (_grounded && !_isOnWater && MoveInput.x != 0 && _groundEffectCoroutine == null)
             {
                 _groundEffectCoroutine = StartCoroutine(SpawnGroundEffect());
             }

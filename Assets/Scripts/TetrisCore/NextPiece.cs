@@ -6,7 +6,6 @@ namespace TetrisCore
     {
         public Sprite sprite;
         public Vector3Int[] cells { get; private set; }
-        public Vector3Int position;
 
         private GameObject[] spriteObjects;
 
@@ -39,7 +38,7 @@ namespace TetrisCore
         {
             for (int i = 0; i < this.cells.Length; i++)
             {
-                Vector3Int cellPosition = this.cells[i] + this.position;
+                Vector3 cellPosition = this.cells[i] + this.transform.position;
                 CreateSprite(cellPosition, i);
             }
         }
@@ -52,7 +51,7 @@ namespace TetrisCore
             Set();
         }
 
-        private void CreateSprite(Vector3Int position, int index)
+        private void CreateSprite(Vector3 position, int index)
         {
             GameObject obj = new GameObject($"NextPieceBlock_{index}");
             obj.transform.position = position;

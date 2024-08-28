@@ -32,6 +32,7 @@ namespace Larva
 
         void OnValidate()
         {
+            if (!gameObject.activeSelf) return;
             // Clean waterpoints 
             StartCoroutine(CreateWaves());
         }

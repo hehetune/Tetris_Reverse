@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using Managers;
 using UnityEngine;
 
 namespace Larva
@@ -34,12 +36,27 @@ public class Larva : MonoBehaviour
 
         private Coroutine _riseCoroutine;
 
+        private void OnEnable()
+        {
+            GameManager.Instance.OnGameOver += OnGameOver;
+        }
+
+        private void OnDisable()
+        {
+            GameManager.Instance.OnGameOver -= OnGameOver;
+        }
+
         private void Start()
         {
             StartRising();
         }
 
-        public void StartRising()
+        private void OnGameOver()
+        {
+            StopRising();
+        }
+
+        private void StartRising()
         {
             this._isRising = true;
             this._delayTimer = this.delayBeforeRising;
@@ -51,7 +68,7 @@ public class Larva : MonoBehaviour
             _riseCoroutine = StartCoroutine(RiseCoroutine());
         }
 
-        public void StopRising()
+        private void StopRising()
         {
             this._isRising = false;
             if (_riseCoroutine == null) return;

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using CustomCamera;
 using Managers;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -62,11 +63,16 @@ namespace TetrisCore
         {
             TetrisGameManager.Instance.OnGameStart += OnGameStart;
             TetrisGameManager.Instance.OnGameStop += OnGameStop;
+            
+            GameManager.Instance.OnGameOver += OnGameStop;
         }
 
         private void OnDisable()
         {
+            TetrisGameManager.Instance.OnGameStart -= OnGameStart;
+            TetrisGameManager.Instance.OnGameStop -= OnGameStop;
             
+            GameManager.Instance.OnGameOver -= OnGameStop;
         }
 
         // private void Update()
@@ -122,7 +128,7 @@ namespace TetrisCore
 
         private void OnGameStop()
         {
-            
+            _isGameStarted = false;
         }
 
         private void GetNextRandomPieceIndex()
@@ -132,8 +138,9 @@ namespace TetrisCore
             nextPiece.ChangePiece(tetrominoes[nextPieceIndex].cells, tetrominoes[nextPieceIndex].sprite);
         }
 
-        public void AddBlockToMatrix(Piece piece)
+        public void AddBlockToMatrix(Piece piece, bool isHardDrop = false)
         {
+            CameraShake.Instance.ShakeCamera(isHardDrop ? 3f : 1f, 0.2f);
             int minY = int.MaxValue, maxY = int.MinValue;
             for (int i = 0; i < piece.blocks.Length; i++)
             {

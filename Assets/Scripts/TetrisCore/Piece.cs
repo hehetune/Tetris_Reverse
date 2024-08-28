@@ -61,6 +61,8 @@ namespace TetrisCore
             TetrisGameManager.Instance.OnGameStart += OnGameStart;
             TetrisGameManager.Instance.OnGameStop += OnGameStop;
             TetrisGameManager.Instance.OnGameResume += OnGameResume;
+
+            GameManager.Instance.OnGameOver += OnGameStop;
         }
 
         private void OnDisable()
@@ -78,6 +80,8 @@ namespace TetrisCore
             TetrisGameManager.Instance.OnGameStart -= OnGameStart;
             TetrisGameManager.Instance.OnGameStop -= OnGameStop;
             TetrisGameManager.Instance.OnGameResume -= OnGameResume;
+            
+            GameManager.Instance.OnGameOver -= OnGameStop;
         }
 
         public void Initialize(Board board, Vector3Int position, TetrominoData data)
@@ -153,24 +157,28 @@ namespace TetrisCore
         private void OnRotateBlockLeft(object sender, EventArgs e)
         {
             // Debug.Log("Piece::OnRotateBlockLeft");
+            if(_gameStop) return;
             Rotate(-1);
         }
 
         private void OnRotateBlockRight(object sender, EventArgs e)
         {
             // Debug.Log("Piece::OnRotateBlockRight");
+            if(_gameStop) return;
             Rotate(1);
         }
 
         private void OnHardDrop(object sender, EventArgs e)
         {
             // Debug.Log("Piece::OnHardDrop at " + Time.time);
+            if(_gameStop) return;
             HardDrop();
         }
 
         private void OnSoftDropPerformed(object sender, EventArgs e)
         {
             // Debug.Log("Piece::OnSoftDropPerformed");
+            if(_gameStop) return;
             softDropEnabled = true;
             if (this.stepTime - Time.time > this.fastStepDelay) this.stepTime = Time.time + fastStepDelay;
         }
@@ -178,11 +186,13 @@ namespace TetrisCore
         private void OnSoftDropCanceled(object sender, EventArgs e)
         {
             // Debug.Log("Piece::OnSoftDropCanceled");
+            if(_gameStop) return;
             softDropEnabled = false;
         }
 
         private void OnMoveLeftPerformed(object sender, EventArgs e)
         {
+            if(_gameStop) return;
             movingLeft = true;
             Move(_moveLeftVector);
             moveLeftHoldingTime = Time.time + moveHoldingDelay;
@@ -190,11 +200,13 @@ namespace TetrisCore
 
         private void OnMoveLeftCancel(object sender, EventArgs e)
         {
+            if(_gameStop) return;
             movingLeft = false;
         }
 
         private void OnMoveRightPerformed(object sender, EventArgs e)
         {
+            if(_gameStop) return;
             movingRight = true;
             Move(_moveRightVector);
             moveRightHoldingTime = Time.time + moveHoldingDelay;
@@ -202,6 +214,7 @@ namespace TetrisCore
         
         private void OnMoveRightCancel(object sender, EventArgs e)
         {
+            if(_gameStop) return;
             movingRight = false;
         }
 
@@ -217,9 +230,9 @@ namespace TetrisCore
             }
         }
 
-        private void Lock()
+        private void Lock(bool isHardDrop = false)
         {
-            this.board.AddBlockToMatrix(this);
+            this.board.AddBlockToMatrix(this, isHardDrop);
             // foreach (Transform t in this.transform) Destroy(t.gameObject);
             this.board.SpawnPiece();
         }
@@ -230,7 +243,7 @@ namespace TetrisCore
             {
             }
 
-            Lock();
+            Lock(true);
         }
 
         private Block CreateBlock(Sprite sprite, Vector3Int position)

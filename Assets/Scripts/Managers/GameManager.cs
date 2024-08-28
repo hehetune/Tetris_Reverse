@@ -18,11 +18,11 @@ namespace Managers
     }
     public class GameManager : MonoSingleton<GameManager>
     {
-        public event EventHandler OnStateChanged;
-        public event EventHandler OnGamePaused;
-        public event EventHandler OnGameUnpaused;
+        public Action OnStateChanged;
+        public Action OnGamePaused;
+        public Action OnGameUnpaused;
 
-        public event EventHandler OnGameOver;
+        public Action OnGameOver;
         
         private GameState _gameState = GameState.DEFAULT;
         public GameState GameState => this._gameState;
@@ -30,6 +30,13 @@ namespace Managers
         [SerializeField] private float _countdownTime = 3f;
         [SerializeField] private float _waitingToStartTimer = 1f;
         [SerializeField] private float _countdownToStartTimer = 3f;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            OnGameOver += () => UIManager.Instance.ToggleGameOverUI(true);
+        }
+
         private void Start()
         {
             this._gameState = GameState.WAIT_TO_STATRT;
@@ -45,7 +52,7 @@ namespace Managers
                     if (_waitingToStartTimer < 0f)
                     {
                         _gameState = GameState.COUNTDOWN_TO_START;
-                        OnStateChanged?.Invoke(this, EventArgs.Empty);
+                        OnStateChanged?.Invoke();
                     }
                     break;
                 case GameState.COUNTDOWN_TO_START:
@@ -53,7 +60,7 @@ namespace Managers
                     if (_countdownToStartTimer < 0f)
                     {
                         _gameState = GameState.PLAYING;
-                        OnStateChanged?.Invoke(this, EventArgs.Empty);
+                        OnStateChanged?.Invoke();
                     }
                     break;
                 case GameState.PLAYING: break;
@@ -92,6 +99,11 @@ namespace Managers
         public void ResumeGame()
         {
             TetrisGameManager.Instance.ResumeGame();
+        }
+
+        public void GameOver()
+        {
+            OnGameOver?.Invoke();
         }
     }
 }
