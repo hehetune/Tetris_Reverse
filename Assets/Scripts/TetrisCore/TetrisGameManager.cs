@@ -7,11 +7,6 @@ namespace TetrisCore
 {
     public class TetrisGameManager : MonoSingleton<TetrisGameManager>
     {
-        public Board mainBoard;
-
-        public GameObject gameStartUI;
-        public GameObject gameOverUI;
-
         public Action OnGameStart;
         public Action OnGameStop;
         public Action OnGameResume;

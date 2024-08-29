@@ -17,8 +17,8 @@ TagManager:
   - Water
   - UI
   - Player
-  - 
-  - 
+  - WaterInteract
+  - TetrisBlock
   - 
   - 
   - 
@@ -43,9 +43,15 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Background
+    uniqueID: 4165542155
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0
   - name: Effect
     uniqueID: 3209259631
+    locked: 0
+  - name: SortingTexture
+    uniqueID: 2585388939
     locked: 0

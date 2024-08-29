@@ -29,7 +29,7 @@ namespace UI.GameHUD
         {
             for (int i = 0; i < hearts.Count; i++)
             {
-                hearts[i].sprite = i + 1 < _characterHealth.Hp ? heartSprite : emptyHeartSprite;
+                hearts[i].sprite = i < _characterHealth.Hp ? heartSprite : emptyHeartSprite;
             }
         }
     }

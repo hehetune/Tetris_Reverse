@@ -58,16 +58,16 @@ namespace Character.Movement
         public bool Grounded => _grounded;
         public bool IsSliding => _isSliding;
 
-        private bool _isOnWater = true;
+        private bool _isOnWater = false;
 
-        private bool _isDisabled = false;
+        private bool _isDied = false;
 
         [SerializeField] private CharacterHealth _characterHealth; 
 
         private void Awake()
         {
             _availableJumps = totalJumps;
-            _characterHealth.OnDie += DisableThis;
+            _characterHealth.OnDie += OnDie;
         }
 
         private void Start()
@@ -87,20 +87,17 @@ namespace Character.Movement
 
         private void Update()
         {
-            if (_isDisabled) return;
+            if (_isDied || GameManager.Instance.GameState != GameState.PLAYING) return;
             HandleMoveHorizontal();
             UpdateGroundedStatus();
             ApplyGravityScale();
             HandleEffects();
         }
 
-        // private void FixedUpdate()
-        // {
-        // }
-
-        private void DisableThis()
+        private void OnDie()
         {
-            this._isDisabled = true;
+            this._isDied = true;
+            this._rb.isKinematic = true;
         }
 
         private void HandleMoveHorizontal()
@@ -138,6 +135,7 @@ namespace Character.Movement
 
         private void OnJumpEvent(object sender, EventArgs e)
         {
+            if (_isDied || !GameManager.Instance.IsGamePlaying()) return;
             if (totalJumps < 0) return;
 
             if (_grounded || _isSliding)
@@ -254,17 +252,20 @@ namespace Character.Movement
             _wallEffectCoroutine = null;
         }
 
+        [SerializeField] private LayerMask _waterLayer;
+
         private void OnTriggerEnter2D(Collider2D other)
         {
-            if (other.gameObject.tag.Equals("Larva"))
+            if ((_waterLayer.value & (1 << other.gameObject.layer)) > 0)
             {
+                Debug.Log(other.gameObject.name);
                 _isOnWater = true;
             }
         }
         
         private void OnTriggerExit2D(Collider2D other)
         {
-            if (other.gameObject.tag.Equals("Larva"))
+            if ((_waterLayer.value & (1 << other.gameObject.layer)) > 0)
             {
                 _isOnWater = false;
             }

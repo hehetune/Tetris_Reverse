@@ -38,15 +38,17 @@ public class Larva : MonoBehaviour
 
         private void OnEnable()
         {
+            GameManager.Instance.OnGameStart += OnGameStart;
             GameManager.Instance.OnGameOver += OnGameOver;
         }
 
         private void OnDisable()
         {
+            GameManager.Instance.OnGameStart -= OnGameStart;
             GameManager.Instance.OnGameOver -= OnGameOver;
         }
 
-        private void Start()
+        private void OnGameStart()
         {
             StartRising();
         }
