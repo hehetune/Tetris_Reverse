@@ -24,7 +24,8 @@ namespace Managers
         [SerializeField] private Button returnMenuBtn_PauseUI;
 
         [Header("HUD")] [SerializeField] private TextMeshProUGUI countdownText;
-        
+        [SerializeField] private TextMeshProUGUI heightText;
+
         private void Start()
         {
             reloadSceneBtn.onClick.AddListener(() => GameManager.Instance.ReloadScene());
@@ -57,6 +58,11 @@ namespace Managers
         public void ToggleCountdownText(bool show)
         {
             countdownText.gameObject.SetActive(show);
+        }
+
+        public void UpdateHeightText(int height)
+        {
+            heightText.text = "Height\n" + height;
         }
     }
 }

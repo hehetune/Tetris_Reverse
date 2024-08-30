@@ -13,20 +13,20 @@ namespace ParallaxBackground
 
         void Start()
         {
-            oldPosition = transform.position.x;
+            oldPosition = transform.position.y;
         }
 
         void Update()
         {
-            if (transform.position.x != oldPosition)
+            if (transform.position.y != oldPosition)
             {
                 if (onCameraTranslate != null)
                 {
-                    float delta = oldPosition - transform.position.x;
+                    float delta = oldPosition - transform.position.y;
                     onCameraTranslate(delta);
                 }
 
-                oldPosition = transform.position.x;
+                oldPosition = transform.position.y;
             }
         }
     }

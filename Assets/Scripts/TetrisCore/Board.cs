@@ -25,7 +25,9 @@ namespace TetrisCore
         public int XMin => _xMin;
         public int XMax => _xMax;
         public int YMin => _yMin;
-        public int YMax => highestYOfBLocks + Mathf.RoundToInt(spawnOffsetPointTransform.transform.position.y) + 1 + pieceYPrefix;
+
+        public int YMax => highestYOfBLocks + Mathf.RoundToInt(spawnOffsetPointTransform.transform.position.y) + 1 +
+                           pieceYPrefix;
 
         private int currentPieceIndex = 0;
         private int nextPieceIndex = 0;
@@ -33,9 +35,11 @@ namespace TetrisCore
 
         private int pieceYPrefix = 1;
 
+        private int rowDeleted = 0;
+
         private bool IsWithinBoard(Vector3Int pos)
         {
-            return pos.x >= _xMin && pos.x < _xMax && pos.y >= _yMin && pos.y < YMax;
+            return pos.x >= _xMin && pos.x < _xMax && pos.y >= _yMin + rowDeleted && pos.y < YMax;
         }
 
         private void Awake()
@@ -63,7 +67,7 @@ namespace TetrisCore
         {
             TetrisGameManager.Instance.OnGameStart += OnGameStart;
             TetrisGameManager.Instance.OnGameStop += OnGameStop;
-            
+
             GameManager.Instance.OnGameOver += OnGameStop;
         }
 
@@ -71,7 +75,7 @@ namespace TetrisCore
         {
             TetrisGameManager.Instance.OnGameStart -= OnGameStart;
             TetrisGameManager.Instance.OnGameStop -= OnGameStop;
-            
+
             GameManager.Instance.OnGameOver -= OnGameStop;
         }
 
@@ -82,7 +86,9 @@ namespace TetrisCore
 
         private void IncreaseRowNumber()
         {
-            int rowsToAdd = Mathf.CeilToInt(highestYOfBLocks + spawnOffsetPointTransform.transform.position.y + 1 + pieceYPrefix) - _blockRows.Count;
+            int rowsToAdd =
+                Mathf.CeilToInt(highestYOfBLocks + spawnOffsetPointTransform.transform.position.y + 1 + pieceYPrefix) -
+                (_blockRows.Count + rowDeleted);
 
             if (rowsToAdd > 0)
             {
@@ -103,13 +109,13 @@ namespace TetrisCore
                 Vector3Int tilePosition = piece.cells[i] + position;
                 if (!IsWithinBoard(tilePosition))
                 {
-                    if(log) Debug.LogError("!IsWithinBoard(tilePosition) " + tilePosition);
+                    if (log) Debug.LogError("!IsWithinBoard(tilePosition) " + tilePosition);
                     return false;
                 }
 
                 if (HasBlock(tilePosition))
                 {
-                    if(log) Debug.LogError("HasBlock(tilePosition)");
+                    if (log) Debug.LogError("HasBlock(tilePosition)");
                     return false;
                 }
             }
@@ -118,6 +124,7 @@ namespace TetrisCore
         }
 
         private bool _isGameStarted = false;
+
         private void OnGameStart()
         {
             if (_isGameStarted) return;
@@ -146,14 +153,15 @@ namespace TetrisCore
             {
                 piece.blocks[i].transform.parent = this.transform;
                 int y = piece.cells[i].y + piece.Position.y, x = piece.cells[i].x + piece.Position.x;
-                _blockRows[y].cols[x] = piece.blocks[i];
+                _blockRows[y - rowDeleted].cols[x] = piece.blocks[i];
                 piece.blocks[i] = null;
 
                 highestYOfBLocks = Mathf.Max(highestYOfBLocks, piece.Position.y + piece.cells[i].y);
                 minY = Mathf.Min(minY, y);
                 maxY = Mathf.Max(maxY, y);
             }
-            Debug.LogError($"AddBlockToMatrix minY: ${minY}, maxY: ${maxY}");
+
+            // Debug.LogError($"AddBlockToMatrix minY: ${minY}, maxY: ${maxY}");
             ClearLines(minY, maxY);
         }
 
@@ -203,7 +211,7 @@ namespace TetrisCore
                 bool isLineEmpty = true;
                 for (int col = _xMin; col < _xMax; col++)
                 {
-                    if (_blockRows[row].cols[col])
+                    if (_blockRows[row - rowDeleted].cols[col])
                     {
                         isLineEmpty = false;
                         MoveBlock(col, row, col, row - emptyRows);
@@ -253,43 +261,69 @@ namespace TetrisCore
                 Vector3Int position = new Vector3Int(col, row, 0);
                 DestroyBlock(position);
             }
-            
-            Debug.Log($"Board::LineClear start row: ${row}, highestRow: ${highestYOfBLocks}");
 
-            
+            // Debug.Log($"Board::LineClear start row: ${row}, highestRow: ${highestYOfBLocks}");
         }
 
         private void DestroyBlock(Vector3Int position)
         {
-            Block block = _blockRows[position.y].cols[position.x];
+            Block block = _blockRows[position.y - rowDeleted].cols[position.x];
             if (block) block.GetComponent<PoolObject>().ReturnToPool();
-            _blockRows[position.y].cols[position.x] = null;
+            _blockRows[position.y - rowDeleted].cols[position.x] = null;
         }
 
         private bool HasBlock(Vector3Int position)
         {
-            return _blockRows[position.y].cols[position.x] != null;
+            return _blockRows[position.y - rowDeleted].cols[position.x] != null;
         }
 
-        private void MoveBlock(int fromCol, int fromRow, int toCol, int toRow) //Vector3Int fromPosition, Vector3Int toPosition
+        private void
+            MoveBlock(int fromCol, int fromRow, int toCol, int toRow) //Vector3Int fromPosition, Vector3Int toPosition
         {
-            Block child = _blockRows[fromRow].cols[fromCol];
+            Block child = _blockRows[fromRow - rowDeleted].cols[fromCol];
             if (child != null)
             {
-                Debug.LogError($"Board::MoveBlock fromCol: ${fromCol}, fromRow: ${fromRow}, toCol: ${toCol}, toRow: ${toRow}");
+                // Debug.LogError(
+                //     $"Board::MoveBlock fromCol: ${fromCol}, fromRow: ${fromRow}, toCol: ${toCol}, toRow: ${toRow}");
                 child.transform.position = new Vector3(toCol + 0.5f, toRow + 0.5f, 0f);
             }
 
-            _blockRows[toRow].cols[toCol] = child;
-            _blockRows[fromRow].cols[fromCol] = null;
+            _blockRows[toRow - rowDeleted].cols[toCol] = child;
+            _blockRows[fromRow - rowDeleted].cols[fromCol] = null;
         }
 
-        private void ClearBoard()
+        public void ClearRowsBelowHeight(float height)
         {
-            foreach (Transform child in transform)
+            // Debug.Log($"Clear rows below {height}");
+            // Keep removing the first row as long as it's below the specified height
+            Block block = GetFirstBlockAtRow(0);
+            while (block != null && Mathf.FloorToInt(block.transform.position.y) <= height)
             {
-                Destroy(child.gameObject);
+                // Debug.Log($"Remove row at height {block.transform.position.y}");
+                ClearRow(0);
+                _blockRows.RemoveAt(0);
+                rowDeleted++;
+                block = GetFirstBlockAtRow(0);
             }
+        }
+
+        private void ClearRow(int row)
+        {
+            for (int col = _xMin; col < _xMax; col++)
+            {
+                Block block = _blockRows[row].cols[col];
+                if(block) block.gameObject.GetComponent<PoolObject>().ReturnToPool();
+            }
+        }
+
+        private Block GetFirstBlockAtRow(int row)
+        {
+            for (int col = _xMin; col < _xMax; col++)
+            {
+                if (_blockRows[row].cols[col] != null) return _blockRows[row].cols[col];
+            }
+
+            return null;
         }
     }
 }
