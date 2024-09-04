@@ -18,7 +18,9 @@ namespace TetrisCore
 
         public int rotationIndex { get; private set; }
 
-        [SerializeField] private float[] stepDelay = new float[] { 0.8f, 0.75f, 0.70f, 0.65f, 0.6f, 0.55f, 0.5f, 0.45f, 0.4f };
+        [SerializeField] private float[] stepDelay = new float[]
+            { 0.8f, 0.75f, 0.70f, 0.65f, 0.6f, 0.55f, 0.5f, 0.45f, 0.4f };
+
         [SerializeField] private float fastStepDelay = 0.07f;
         [SerializeField] public float moveDelay = 0.05f;
         [SerializeField] private float nextLevelDelay = 5f;
@@ -76,11 +78,11 @@ namespace TetrisCore
             GameInput.Instance.OnBlockSoftDropAction -= OnSoftDropPerformed;
             GameInput.Instance.OnBlockSoftDropCancel -= OnSoftDropCanceled;
             GameInput.Instance.OnBlockHardDropAction -= OnHardDrop;
-            
+
             TetrisGameManager.Instance.OnGameStart -= OnGameStart;
             TetrisGameManager.Instance.OnGameStop -= OnGameStop;
             TetrisGameManager.Instance.OnGameResume -= OnGameResume;
-            
+
             GameManager.Instance.OnGameOver -= OnGameStop;
         }
 
@@ -119,14 +121,14 @@ namespace TetrisCore
             if (this.currentLevel < this.stepDelay.Length - 1)
             {
                 this.nextLevelTime += Time.deltaTime;
-            
+
                 if (nextLevelTime >= nextLevelDelay)
                 {
                     currentLevel++;
                     nextLevelTime = 0f;
                 }
             }
-            
+
             if (Time.time >= this.stepTime)
             {
                 Step();
@@ -157,28 +159,28 @@ namespace TetrisCore
         private void OnRotateBlockLeft(object sender, EventArgs e)
         {
             // Debug.Log("Piece::OnRotateBlockLeft");
-            if(_gameStop) return;
+            if (_gameStop) return;
             Rotate(-1);
         }
 
         private void OnRotateBlockRight(object sender, EventArgs e)
         {
             // Debug.Log("Piece::OnRotateBlockRight");
-            if(_gameStop) return;
+            if (_gameStop) return;
             Rotate(1);
         }
 
         private void OnHardDrop(object sender, EventArgs e)
         {
             // Debug.Log("Piece::OnHardDrop at " + Time.time);
-            if(_gameStop) return;
+            if (_gameStop) return;
             HardDrop();
         }
 
         private void OnSoftDropPerformed(object sender, EventArgs e)
         {
             // Debug.Log("Piece::OnSoftDropPerformed");
-            if(_gameStop) return;
+            if (_gameStop) return;
             softDropEnabled = true;
             if (this.stepTime - Time.time > this.fastStepDelay) this.stepTime = Time.time + fastStepDelay;
         }
@@ -186,13 +188,13 @@ namespace TetrisCore
         private void OnSoftDropCanceled(object sender, EventArgs e)
         {
             // Debug.Log("Piece::OnSoftDropCanceled");
-            if(_gameStop) return;
+            if (_gameStop) return;
             softDropEnabled = false;
         }
 
         private void OnMoveLeftPerformed(object sender, EventArgs e)
         {
-            if(_gameStop) return;
+            if (_gameStop) return;
             movingLeft = true;
             Move(_moveLeftVector);
             moveLeftHoldingTime = Time.time + moveHoldingDelay;
@@ -200,21 +202,21 @@ namespace TetrisCore
 
         private void OnMoveLeftCancel(object sender, EventArgs e)
         {
-            if(_gameStop) return;
+            if (_gameStop) return;
             movingLeft = false;
         }
 
         private void OnMoveRightPerformed(object sender, EventArgs e)
         {
-            if(_gameStop) return;
+            if (_gameStop) return;
             movingRight = true;
             Move(_moveRightVector);
             moveRightHoldingTime = Time.time + moveHoldingDelay;
         }
-        
+
         private void OnMoveRightCancel(object sender, EventArgs e)
         {
-            if(_gameStop) return;
+            if (_gameStop) return;
             movingRight = false;
         }
 
@@ -375,16 +377,16 @@ namespace TetrisCore
 
         // private bool TestWallKicks(int rotationIndex, int rotationDirection)
         // {
-            // int wallKickIndex = GetWallKickIndex(rotationIndex, rotationDirection);
-            //
-            // for (int i = 0; i < this.data.wallKicks.GetLength(1); i++)
-            // {
-            //     Vector2Int translation = this.data.wallKicks[wallKickIndex, i];
-            //
-            //     if (CheckCanMove(translation)) return true;
-            // }
-            //
-            // return false;
+        // int wallKickIndex = GetWallKickIndex(rotationIndex, rotationDirection);
+        //
+        // for (int i = 0; i < this.data.wallKicks.GetLength(1); i++)
+        // {
+        //     Vector2Int translation = this.data.wallKicks[wallKickIndex, i];
+        //
+        //     if (CheckCanMove(translation)) return true;
+        // }
+        //
+        // return false;
         // }
 
         private void UpdateBlocksPosition()

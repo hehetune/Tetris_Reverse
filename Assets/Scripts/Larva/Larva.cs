@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Larva
 {
-public class Larva : MonoBehaviour
+    public class Larva : MonoBehaviour
     {
         [Tooltip("Distance to move upward each time.")]
         public float riseDistance = 1f;
@@ -38,14 +38,20 @@ public class Larva : MonoBehaviour
 
         private void OnEnable()
         {
+            this._delayTimer = this.delayBeforeRising;
+            this._currentInterval = this.initialIntervalBetweenRises;
+            this._intervalReductionTimer = this.timeToReduceInterval;
+            
             GameManager.Instance.OnGameStart += OnGameStart;
             GameManager.Instance.OnGameOver += OnGameOver;
+            // GameManager.Instance.OnGamePaused += OnGamePaused;
         }
 
         private void OnDisable()
         {
             GameManager.Instance.OnGameStart -= OnGameStart;
             GameManager.Instance.OnGameOver -= OnGameOver;
+            // GameManager.Instance.OnGamePaused -= OnGamePaused;
         }
 
         private void OnGameStart()
@@ -58,13 +64,14 @@ public class Larva : MonoBehaviour
             StopRising();
         }
 
+        // private void OnGamePaused()
+        // {
+        //     StopRising();
+        // }
+
         private void StartRising()
         {
             this._isRising = true;
-            this._delayTimer = this.delayBeforeRising;
-            this._currentInterval = this.initialIntervalBetweenRises;
-            this._intervalReductionTimer = this.timeToReduceInterval;
-
             if (_riseCoroutine != null)
                 StopCoroutine(_riseCoroutine);
             _riseCoroutine = StartCoroutine(RiseCoroutine());

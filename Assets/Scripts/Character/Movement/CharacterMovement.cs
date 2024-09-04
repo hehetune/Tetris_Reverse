@@ -87,11 +87,11 @@ namespace Character.Movement
 
         private void Update()
         {
-            if (_isDied || GameManager.Instance.GameState != GameState.PLAYING) return;
-            HandleMoveHorizontal();
             UpdateGroundedStatus();
             ApplyGravityScale();
             HandleEffects();
+            if (_isDied || GameManager.Instance.GameState != GameState.PLAYING) return;
+            HandleMoveHorizontal();
         }
 
         private void OnDie()

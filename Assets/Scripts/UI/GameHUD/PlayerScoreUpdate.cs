@@ -27,8 +27,14 @@ namespace UI.GameHUD
 
         private void OnGameOver()
         {
-            int saveScore = PlayerPrefs.GetInt("HighestScore");
-            if(highestScore > saveScore) PlayerPrefs.SetInt("HighestScore", highestScore);
+            int saveScore = ES3.Load("HighestScore", 0);
+            if (highestScore > saveScore)
+            {
+                ES3.Save("HighestScore", highestScore);
+                saveScore = highestScore;
+            }
+
+            UIManager.Instance.ToggleGameOverUI(true, highestScore, saveScore);
         }
     }
 }

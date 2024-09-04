@@ -5,8 +5,9 @@ namespace CustomCamera
 {
     public class TetrisCamera : MonoBehaviour
     {
-        [SerializeField] private GameObject _character;
-        [SerializeField] private float _minYValue;
+        [SerializeField] private Transform _character;
+        [SerializeField] private Transform _larva;
+        [SerializeField] private float _yOffset;
 
         private Vector3 _targetPosition;
 
@@ -22,7 +23,7 @@ namespace CustomCamera
 
         private void UpdateTargetPosition()
         {
-            _targetPosition.y = Mathf.Max(_character.transform.position.y, _minYValue);
+            _targetPosition.y = Mathf.Max(_character.position.y + _yOffset, _larva.position.y + _yOffset);
             transform.position = _targetPosition;
         }
 

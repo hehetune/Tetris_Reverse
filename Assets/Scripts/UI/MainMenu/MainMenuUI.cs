@@ -7,15 +7,15 @@ namespace UI.MainMenu
     public class MainMenuUI : MonoBehaviour
     {
         [SerializeField] private Button _playButton;
-        [SerializeField] private Button _settingButton;
+        [SerializeField] private Button _htpButton;
         [SerializeField] private Button _quitButton;
 
-        [SerializeField] private GameObject _settingPanel;
+        [SerializeField] private GameObject _htpPanel;
 
         private void Awake()
         {
             _playButton.onClick.AddListener(Play);
-            _settingButton.onClick.AddListener(SettingOnClick);
+            _htpButton.onClick.AddListener(HtpOnClick);
             _quitButton.onClick.AddListener(QuitOnClick);
         }
 
@@ -24,14 +24,21 @@ namespace UI.MainMenu
             Loader.Load(Loader.Scene.GameScene);
         }
 
-        private void SettingOnClick()
+        private void HtpOnClick()
         {
-            _settingPanel.SetActive(true);
+            _htpPanel.SetActive(true);
+            this.gameObject.SetActive(false);
         }
 
         private void QuitOnClick()
         {
             Application.Quit();
+        }
+
+        public void OnBack()
+        {
+            _htpPanel.SetActive(false);
+            this.gameObject.SetActive(true);
         }
     }
 }

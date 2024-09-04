@@ -16,6 +16,8 @@ namespace Managers
 
         [Header("Game Over")] [SerializeField] private Button gameOverBtn;
         [SerializeField] private GameObject gameOverUI;
+        [SerializeField] private TextMeshProUGUI highestScoreTxt;
+        [SerializeField] private TextMeshProUGUI scoreTxt;
         
         [Header("Pause Menu")]
         [SerializeField] private GameObject pauseMenuUI;
@@ -25,6 +27,7 @@ namespace Managers
 
         [Header("HUD")] [SerializeField] private TextMeshProUGUI countdownText;
         [SerializeField] private TextMeshProUGUI heightText;
+        [SerializeField] private Button pauseBtn;
 
         private void Start()
         {
@@ -38,11 +41,18 @@ namespace Managers
             resumeBtn_PauseUI.onClick.AddListener(() => GameManager.Instance.ResumeGame());
             restartBtn_PauseUI.onClick.AddListener(() => GameManager.Instance.ReloadScene());
             returnMenuBtn_PauseUI.onClick.AddListener(() => GameManager.Instance.ReturnToMenu());
+            
+            pauseBtn.onClick.AddListener(() => GameManager.Instance.OnPauseClick());
         }
 
-        public void ToggleGameOverUI(bool show)
+        public void ToggleGameOverUI(bool show, int score = 0, int highestScore = 0)
         {
             gameOverUI.SetActive(show);
+            if (show)
+            {
+                highestScoreTxt.text = highestScore.ToString();
+                scoreTxt.text = score.ToString();
+            }
         }
 
         public void TogglePauseMenu(bool show)

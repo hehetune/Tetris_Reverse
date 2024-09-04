@@ -30,10 +30,14 @@ namespace Character.Animation
 
         [SerializeField] private float gameOverWaitTime = 0.5f;
 
+        private float initialGravityScale;
+
         private void Awake()
         {
             _characterHealth.OnHit += OnHit;
             _characterHealth.OnDie += OnDie;
+
+            initialGravityScale = this._rigidbody.gravityScale;
         }
 
         // private void OnEnable()
@@ -124,6 +128,15 @@ namespace Character.Animation
                 yield return null;
             }
         }
+
+        private void EnableGravity()
+        {
+            _rigidbody.bodyType = RigidbodyType2D.Dynamic;
+        }
         
+        private void DisableGravity()
+        {
+            _rigidbody.bodyType = RigidbodyType2D.Kinematic;
+        }
     }
 }

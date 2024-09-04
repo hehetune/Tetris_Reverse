@@ -312,7 +312,7 @@ namespace TetrisCore
             for (int col = _xMin; col < _xMax; col++)
             {
                 Block block = _blockRows[row].cols[col];
-                if(block) block.gameObject.GetComponent<PoolObject>().ReturnToPool();
+                if (block) block.gameObject.GetComponent<PoolObject>().ReturnToPool();
             }
         }
 

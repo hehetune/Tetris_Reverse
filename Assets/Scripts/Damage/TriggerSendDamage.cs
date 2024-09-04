@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using Character.Health;
+using Managers;
 using UnityEngine;
 
 namespace Damage
@@ -10,6 +11,11 @@ namespace Damage
         public int hpDecreaseAmount;
         private CharacterHealth _characterHealth;
         private Coroutine _sendDamageCoroutine;
+
+        // private void OnEnable()
+        // {
+        //     GameManager.Instance.OnGamePaused
+        // }
 
         private void OnTriggerEnter2D(Collider2D other)
         {

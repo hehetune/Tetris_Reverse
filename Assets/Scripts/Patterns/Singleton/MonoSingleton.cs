@@ -44,6 +44,7 @@ namespace UnityCommunity.UnitySingleton
                     instance = FindObjectOfType<T>();
                     if (instance == null)
                     {
+                        Debug.LogError($"Create new instance of type {typeof(T).Name}");
                         GameObject obj = new GameObject();
                         obj.name = typeof(T).Name;
                         instance = obj.AddComponent<T>();

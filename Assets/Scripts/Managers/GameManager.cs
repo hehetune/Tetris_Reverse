@@ -20,8 +20,8 @@ namespace Managers
     public class GameManager : MonoSingleton<GameManager>
     {
         public Action OnStateChanged;
-        public Action OnGamePaused;
-        public Action OnGameUnpaused;
+        // public Action OnGamePaused;
+        // public Action OnGameUnpaused;
 
         public Action OnGameStart;
         public Action OnGameOver;
@@ -33,11 +33,10 @@ namespace Managers
         [SerializeField] private float _waitingToStartTimer = .5f;
         [SerializeField] private float _countdownToStartTimer = 3f;
 
-        protected override void Awake()
-        {
-            base.Awake();
-            OnGameOver += () => UIManager.Instance.ToggleGameOverUI(true);
-        }
+        // protected override void Awake()
+        // {
+        //     base.Awake();
+        // }
 
         private void Start()
         {
@@ -92,7 +91,8 @@ namespace Managers
         
         public void ReloadScene()
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            Debug.LogError("restart scene");
+            SceneManager.LoadSceneAsync(SceneManager.GetActiveScene().name);
         }
 
         // private void StartCountDown()
@@ -126,17 +126,33 @@ namespace Managers
             }
         }
 
+        public void OnPauseClick()
+        {
+            if (_gameState != GameState.PLAYING && _gameState != GameState.PAUSED) return;
+            bool isPaused = _gameState == GameState.PAUSED;
+            if (isPaused)
+            {
+                ResumeGame();
+            }
+            else
+            {
+                StopGame();
+            }
+        }
+
         public void StopGame()
         {
             _gameState = GameState.PAUSED;
-            TetrisGameManager.Instance.StopGame();
+            Time.timeScale = 0f;
+            // TetrisGameManager.Instance.StopGame();
             UIManager.Instance.TogglePauseMenu(true);
         }
 
         public void ResumeGame()
         {
             _gameState = GameState.PLAYING;
-            TetrisGameManager.Instance.ResumeGame();
+            Time.timeScale = 1f;
+            // TetrisGameManager.Instance.ResumeGame();
             UIManager.Instance.TogglePauseMenu(false);
         }
 
